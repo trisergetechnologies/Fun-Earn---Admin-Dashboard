@@ -27,11 +27,43 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
+  // {
+  //   icon: <GridIcon />,
+  //   name: "Dashboard",
+  //   subItems: [{ name: "Ecommerce", path: "/admin", pro: false }],
+  // },
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/admin", pro: false }],
+    path: "/admin",
   },
+  {
+    icon: <CalenderIcon />,
+    name: "Products",
+    path: "/admin/product",
+  },
+  {
+    icon: <CalenderIcon />,
+    name: "Categories",
+    path: "/admin/category",
+  },
+  {
+    icon: <CalenderIcon />,
+    name: "Users",
+    path: "/admin/users",
+  },
+  {
+    icon: <CalenderIcon />,
+    name: "Orders",
+    path: "/admin/orders",
+  },
+  {
+    icon: <CalenderIcon />,
+    name: "Settings",
+    path: "/admin/settings",
+  },
+
+
   {
     icon: <CalenderIcon />,
     name: "Calendar",
