@@ -1,221 +1,318 @@
+"use client";
 
-
-
-import Badge from "@/components/ui/badge/Badge";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import Image from "next/image";
+import Badge from "@/components/ui/badge/Badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import ChangeStatusModal from "./ChangeStatusModal";
+import OrderDetailsModal from "./OrderDetailsModal";
+import { getToken } from "@/helper/tokenHelper";
 
-interface Order {
-  id: number;
-  user: {
-    image: string;
-    name: string;
-    role: string;
-  };
-  projectName: string;
-  team: {
-    images: string[];
-  };
-  status: string;
-  budget: string;
+interface OrderItem {
+  productId: { _id: string; title: string };
+  productTitle: string;
+  productThumbnail: string;
+  quantity: number;
+  priceAtPurchase: number;
+  finalPriceAtPurchase: number;
 }
 
-// Define the table data using the interface
-const tableData: Order[] = [
-  {
-    id: 1,
-    user: {
-      image: "/images/user/user-17.jpg",
-      name: "Lindsey Curtis",
-      role: "Web Designer",
-    },
-    projectName: "Agency Website",
-    team: {
-      images: [
-        "/images/user/user-22.jpg",
-        "/images/user/user-23.jpg",
-        "/images/user/user-24.jpg",
-      ],
-    },
-    budget: "3.9K",
-    status: "Active",
-  },
-  {
-    id: 2,
-    user: {
-      image: "/images/user/user-18.jpg",
-      name: "Kaiya George",
-      role: "Project Manager",
-    },
-    projectName: "Technology",
-    team: {
-      images: ["/images/user/user-25.jpg", "/images/user/user-26.jpg"],
-    },
-    budget: "24.9K",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    user: {
-      image: "/images/user/user-17.jpg",
-      name: "Zain Geidt",
-      role: "Content Writing",
-    },
-    projectName: "Blog Writing",
-    team: {
-      images: ["/images/user/user-27.jpg"],
-    },
-    budget: "12.7K",
-    status: "Active",
-  },
-  {
-    id: 4,
-    user: {
-      image: "/images/user/user-20.jpg",
-      name: "Abram Schleifer",
-      role: "Digital Marketer",
-    },
-    projectName: "Social Media",
-    team: {
-      images: [
-        "/images/user/user-28.jpg",
-        "/images/user/user-29.jpg",
-        "/images/user/user-30.jpg",
-      ],
-    },
-    budget: "2.8K",
-    status: "Cancel",
-  },
-  {
-    id: 5,
-    user: {
-      image: "/images/user/user-21.jpg",
-      name: "Carla George",
-      role: "Front-end Developer",
-    },
-    projectName: "Website",
-    team: {
-      images: [
-        "/images/user/user-31.jpg",
-        "/images/user/user-32.jpg",
-        "/images/user/user-33.jpg",
-      ],
-    },
-    budget: "4.5K",
-    status: "Active",
-  },
-];
+interface Order {
+  _id: string;
+  buyerId: { _id: string; name: string; email: string };
+  items: OrderItem[];
+  status: string;
+  finalAmountPaid: number;
+  paymentStatus: string;
+  createdAt: string;
+  deliveryAddress: {
+    fullName: string;
+    street: string;
+    city: string;
+    state: string;
+    pincode: string;
+    phone: string;
+  };
+}
 
 export default function BasicTableOne() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [openDetails, setOpenDetails] = useState(false);
+
+  const [statusOrder, setStatusOrder] = useState<Order | null>(null);
+  const [openStatus, setOpenStatus] = useState(false);
+
+  // Filters
+  const [searchId, setSearchId] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+
+  let token: any
+
+
+  useEffect(() => {
+    token = getToken();
+    
+    const fetchOrders = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/order/getorders`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setOrders(res.data.data || []);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, [token]);
+
+  const openOrderDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setOpenDetails(true);
+  };
+
+  const openChangeStatus = (order: Order) => {
+    setStatusOrder(order);
+    setOpenStatus(true);
+  };
+
+  // ---- Filtering & Sorting ----
+  const filteredOrders = orders
+    .filter((o) =>
+      searchId ? o._id.toLowerCase().includes(searchId.toLowerCase()) : true
+    )
+    .filter((o) => (statusFilter ? o.status === statusFilter : true))
+    .filter((o) => (paymentFilter ? o.paymentStatus === paymentFilter : true))
+    .sort((a, b) => {
+      if (sortBy === "newest")
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sortBy === "oldest")
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      if (sortBy === "amountHigh")
+        return b.finalAmountPaid - a.finalAmountPaid;
+      if (sortBy === "amountLow")
+        return a.finalAmountPaid - b.finalAmountPaid;
+      return 0;
+    });
+
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-gray-900">
+      {/* Filters Toolbar */}
+      <div className="p-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between border-b border-gray-100 dark:border-white/[0.05]">
+        <div className="flex flex-wrap gap-3">
+          <input
+            type="text"
+            value={searchId}
+            onChange={(e) => setSearchId(e.target.value)}
+            placeholder="Search by Order ID..."
+            className="border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700"
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700"
+          >
+            <option value="">All Statuses</option>
+            <option value="placed">Placed</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="returned">Returned</option>
+          </select>
+          <select
+            value={paymentFilter}
+            onChange={(e) => setPaymentFilter(e.target.value)}
+            className="border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700"
+          >
+            <option value="">All Payments</option>
+            <option value="paid">Paid</option>
+            <option value="failed">Failed</option>
+          </select>
+        </div>
+
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700"
+        >
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="amountHigh">Amount High → Low</option>
+          <option value="amountLow">Amount Low → High</option>
+        </select>
+      </div>
+
+      {/* Table */}
       <div className="max-w-full overflow-x-auto">
-        <div className="min-w-[1102px]">
-          <Table>
-            {/* Table Header */}
-            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+        <Table className="min-w-full">
+          {/* Header */}
+          <TableHeader className="border-b border-gray-100 dark:border-white/[0.05] bg-gray-50 dark:bg-gray-800">
+            <TableRow>
+              <TableCell isHeader>User</TableCell>
+              <TableCell isHeader>Items</TableCell>
+              <TableCell isHeader>Status</TableCell>
+              <TableCell isHeader>Payment</TableCell>
+              <TableCell isHeader>Amount</TableCell>
+              <TableCell isHeader>Date</TableCell>
+              <TableCell isHeader>Actions</TableCell>
+            </TableRow>
+          </TableHeader>
+
+          {/* Body */}
+          <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            {loading ? (
               <TableRow>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  User
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Project Name
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Team
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Status
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Budget
+                <TableCell colSpan={7} className="text-center py-6">
+                  Loading orders...
                 </TableCell>
               </TableRow>
-            </TableHeader>
+            ) : filteredOrders.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-6">
+                  No orders found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredOrders.map((order) => (
+                <TableRow
+                  key={order._id}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition"
+                >
+                  {/* User */}
+                  <TableCell className="px-4 py-3">
+                    <div>
+                      <span className="block font-medium text-gray-800 dark:text-white/90">
+                        {order.buyerId.name}
+                      </span>
+                      <span className="block text-gray-500 text-xs">
+                        {order.buyerId.email}
+                      </span>
+                    </div>
+                  </TableCell>
 
-            {/* Table Body */}
-            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {tableData.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="px-5 py-4 sm:px-6 text-start">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 overflow-hidden rounded-full">
-                        <Image
-                          width={40}
-                          height={40}
-                          src={order.user.image}
-                          alt={order.user.name}
-                        />
-                      </div>
-                      <div>
-                        <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                          {order.user.name}
-                        </span>
-                        <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
-                          {order.user.role}
-                        </span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                    {order.projectName}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                  {/* Items preview */}
+                  <TableCell className="px-4 py-3">
                     <div className="flex -space-x-2">
-                      {order.team.images.map((teamImage, index) => (
-                        <div
-                          key={index}
-                          className="w-6 h-6 overflow-hidden border-2 border-white rounded-full dark:border-gray-900"
-                        >
-                          <Image
-                            width={24}
-                            height={24}
-                            src={teamImage}
-                            alt={`Team member ${index + 1}`}
-                            className="w-full"
-                          />
-                        </div>
+                      {order.items.slice(0, 3).map((item, i) => (
+                        <Image
+                          key={i}
+                          src={item.productThumbnail}
+                          alt={item.productTitle}
+                          width={32}
+                          height={32}
+                          className="w-8 h-8 rounded-full border border-white dark:border-gray-900"
+                        />
                       ))}
+                      {order.items.length > 3 && (
+                        <span className="text-xs text-gray-500 ml-2">
+                          +{order.items.length - 3} more
+                        </span>
+                      )}
                     </div>
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+
+                  {/* Status */}
+                  <TableCell>
                     <Badge
                       size="sm"
                       color={
-                        order.status === "Active"
-                          ? "success"
-                          : order.status === "Pending"
+                        order.status === "placed"
                           ? "warning"
-                          : "error"
+                          : order.status === "processing"
+                          ? "info"
+                          : order.status === "shipped"
+                          ? "primary"
+                          : order.status === "delivered"
+                          ? "success"
+                          : order.status === "cancelled"
+                          ? "error"
+                          : "info"
                       }
                     >
                       {order.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    {order.budget}
+
+                  {/* Payment */}
+                  <TableCell>
+                    <Badge
+                      size="sm"
+                      color={order.paymentStatus === "paid" ? "success" : "error"}
+                    >
+                      {order.paymentStatus}
+                    </Badge>
+                  </TableCell>
+
+                  {/* Amount */}
+                  <TableCell className="font-medium text-gray-800 dark:text-white/90">
+                    ₹{order.finalAmountPaid.toFixed(2)}
+                  </TableCell>
+
+                  {/* Date */}
+                  <TableCell className="text-sm text-gray-600 dark:text-gray-400">
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </TableCell>
+
+                  {/* Actions */}
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openOrderDetails(order)}
+                        className="px-3 py-1 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-700"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => openChangeStatus(order)}
+                        className="px-3 py-1 bg-green-600 text-white text-xs rounded-md hover:bg-green-700"
+                      >
+                        Change Status
+                      </button>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
+
+      {/* Modals */}
+      {selectedOrder && (
+        <OrderDetailsModal
+          open={openDetails}
+          onClose={() => setOpenDetails(false)}
+          order={selectedOrder}
+        />
+      )}
+      {statusOrder && (
+        <ChangeStatusModal
+          open={openStatus}
+          onClose={() => setOpenStatus(false)}
+          order={statusOrder}
+          onUpdated={(updated) => {
+            setOrders((prev) =>
+              prev.map((o) => (o._id === updated._id ? { ...o, ...updated } : o))
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

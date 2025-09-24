@@ -1,483 +1,234 @@
-"use client"
+"use client";
 
-
-import Input from "@/components/form/input/InputField";
-import Label from "@/components/form/Label";
-import Badge from "@/components/ui/badge/Badge";
-import Button from "@/components/ui/button/Button";
-import { Modal } from "@/components/ui/modal";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import { useModal } from "@/hooks/useModal";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import axios from "axios";
+import Badge from "@/components/ui/badge/Badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-import axios from 'axios';
-import Alert from "@/components/ui/alert/Alert";
+import { ProductDetail, ProductAdd, ProductUpdate } from "./ProductModals";
+import { getToken } from "@/helper/tokenHelper";
 
-interface Order {
-  id: number;
-  user: {
-    image: string;
-    name: string;
-    role: string;
-  };
-  projectName: string;
-  team: {
-    images: string[];
-  };
-  status: string;
-  budget: string;
+export interface Category {
+  _id: string;
+  title: string;
+  slug: string;
 }
 
-interface Seller {
+export interface Seller {
   _id: string;
   name: string;
   email: string;
 }
 
-interface Category {
+export interface Product {
   _id: string;
+  sellerId: Seller | null;
+  categoryId: Category;
   title: string;
+  description: string;
+  images: string[];
+  price: number;
+  gst: number;
+  discountPercent: number;
+  finalPrice: number;
+  createdByRole: string,
+  stock: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
+const API_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/product/getproducts`;
 
-// Define the table data using the interface
-const tableData: Order[] = [
-  {
-    id: 1,
-    user: {
-      image: "/images/user/user-17.jpg",
-      name: "Lindsey Curtis",
-      role: "Web Designer",
-    },
-    projectName: "Agency Website",
-    team: {
-      images: [
-        "/images/user/user-22.jpg",
-        "/images/user/user-23.jpg",
-        "/images/user/user-24.jpg",
-      ],
-    },
-    budget: "3.9K",
-    status: "Active",
-  },
-  {
-    id: 2,
-    user: {
-      image: "/images/user/user-18.jpg",
-      name: "Kaiya George",
-      role: "Project Manager",
-    },
-    projectName: "Technology",
-    team: {
-      images: ["/images/user/user-25.jpg", "/images/user/user-26.jpg"],
-    },
-    budget: "24.9K",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    user: {
-      image: "/images/user/user-17.jpg",
-      name: "Zain Geidt",
-      role: "Content Writing",
-    },
-    projectName: "Blog Writing",
-    team: {
-      images: ["/images/user/user-27.jpg"],
-    },
-    budget: "12.7K",
-    status: "Active",
-  },
-  {
-    id: 4,
-    user: {
-      image: "/images/user/user-20.jpg",
-      name: "Abram Schleifer",
-      role: "Digital Marketer",
-    },
-    projectName: "Social Media",
-    team: {
-      images: [
-        "/images/user/user-28.jpg",
-        "/images/user/user-29.jpg",
-        "/images/user/user-30.jpg",
-      ],
-    },
-    budget: "2.8K",
-    status: "Cancel",
-  },
-  {
-    id: 5,
-    user: {
-      image: "/images/user/user-21.jpg",
-      name: "Carla George",
-      role: "Front-end Developer",
-    },
-    projectName: "Website",
-    team: {
-      images: [
-        "/images/user/user-31.jpg",
-        "/images/user/user-32.jpg",
-        "/images/user/user-33.jpg",
-      ],
-    },
-    budget: "4.5K",
-    status: "Active",
-  },
-];
+  let TOKEN: any
 
-export default function BasicTableOne() {
+export default function ProductTable() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { isOpen, openModal, closeModal } = useModal();
+  const [openAdd, setOpenAdd] = useState(false);
+  const [openUpdate, setOpenUpdate] = useState<Product | null>(null);
+  const [openDetail, setOpenDetail] = useState<Product | null>(null);
 
-
-  const [sellers, setSellers] = useState<Seller[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [sellerId, setSellerId] = useState("");
-  const [price, setPrice] = useState("");
-  const [stock, setStock] = useState("");
-  const [discountPercent, setDiscountPercent] = useState("");
-  const [image, setImage] = useState<File | null>(null);
-
-  const [alert, setAlert] = useState<{
-    variant: "success" | "error";
-    title: string;
-    message: string;
-  } | null>(null);
-
-
+  // fetch products
   useEffect(() => {
-    if (isOpen) {
-      fetchSellers();
-      fetchCategories();
-    }
-  }, [isOpen]);
-
-  const fetchSellers = async () => {
-    const res = await axios.get("/api/sellers");
-    if (res.data.success) setSellers(res.data.data);
-  };
-
-  const fetchCategories = async () => {
-    const res = await axios.get("/api/category");
-    if (res.data.success) setCategories(res.data.data);
-  };
-
-
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validation
-    if (!title || !description || !categoryId || !sellerId || !price || !stock) {
-      setAlert({
-        variant: "error",
-        title: "Missing Required Fields",
-        message: "Please fill all the required fields.",
-      });
-      return;
-    }
-
-    if (!image) {
-      setAlert({
-        variant: "error",
-        title: "Image Required",
-        message: "Please upload a product image.",
-      });
-      return;
-    }
-
-    if (image.size > 2 * 1024 * 1024) {
-      setAlert({
-        variant: "error",
-        title: "Image Too Large",
-        message: "Image size must be less than 2MB.",
-      });
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("categoryId", categoryId);
-    formData.append("sellerId", sellerId);
-    formData.append("price", price);
-    formData.append("stock", stock);
-    formData.append("discountPercent", discountPercent || "0");
-    formData.append("file", image);
-
-    try {
-      const res = await axios.post("/api/product", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      if (res.data.success) {
-        setAlert({
-          variant: "success",
-          title: "Product Added",
-          message: "The product has been successfully added.",
+    TOKEN = getToken();
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(API_URL, {
+          headers: { Authorization: `Bearer ${TOKEN}` },
         });
-        setTimeout(() => {
-          closeModal();
-        }, 1500);
-      } else {
-        setAlert({
-          variant: "error",
-          title: "Error",
-          message: res.data.message || "Something went wrong.",
-        });
+
+        console.log("Full API response:", res.data);
+
+        // ✅ extract products safely
+        const list = res.data?.data?.products || [];
+        console.log("Fetched list:", list);
+
+        setProducts(list);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Error:", err);
-      setAlert({
-        variant: "error",
-        title: "Request Failed",
-        message: "Something went wrong while adding the product.",
-      });
-    }
-  };
+    };
 
-  useEffect(() => {
-    if (alert) {
-      const timer = setTimeout(() => {
-        setAlert(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [alert]);
+    fetchProducts();
+  }, []);
+
+
+
+  // filters (simplified: only search)
+  const [search, setSearch] = useState("");
+  const filteredProducts = useMemo(() => {
+    return products.filter(
+      (p) =>
+        p.title?.toLowerCase().includes(search.toLowerCase()) ||
+        p.sellerId?.name?.toLowerCase().includes(search.toLowerCase()) ||
+        p.categoryId?.title?.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [products, search]);
+
+  // CRUD handlers
+  const handleAdd = (p: Product) => setProducts((prev) => [...prev, p]);
+  const handleUpdate = (p: Product) =>
+    setProducts((prev) => prev.map((x) => (x._id === p._id ? p : x)));
+  const handleDelete = (id: string) =>
+    setProducts((prev) => prev.filter((x) => x._id !== id));
+
+  if (loading) return <p>Loading…</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <>
-          <Button onClick={openModal}>New Product</Button>
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-      <div className="max-w-full overflow-x-auto">
-        <div className="min-w-[1102px]">
-          <Table>
-            {/* Table Header */}
-            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
-              <TableRow>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  User
+    <div className="rounded-xl border p-4 bg-white dark:bg-gray-900">
+      {/* Filters */}
+      <div className="flex mb-4 gap-3">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search..."
+          className="border rounded px-3 py-2 text-sm flex-1"
+        />
+        <button
+          onClick={() => setOpenAdd(true)}
+          className="px-4 py-2 bg-indigo-600 text-white rounded"
+        >
+          + Add
+        </button>
+      </div>
+
+      {/* Table */}
+      {/* Table */}
+      <div className="overflow-x-auto rounded-lg shadow border border-gray-200 dark:border-gray-700">
+        <Table className="w-full text-sm">
+          <TableHeader>
+            <TableRow className="bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-left">
+              <TableCell isHeader className="px-6 py-3 font-semibold">Product</TableCell>
+              <TableCell isHeader className="px-6 py-3 font-semibold">Category</TableCell>
+              <TableCell isHeader className="px-6 py-3 font-semibold">Seller</TableCell>
+              <TableCell isHeader className="px-6 py-3 font-semibold text-right">Price</TableCell>
+              <TableCell isHeader className="px-6 py-3 font-semibold text-center">Status</TableCell>
+              <TableCell isHeader className="px-6 py-3 font-semibold text-center">Actions</TableCell>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {filteredProducts.map((p) => (
+              <TableRow
+                key={p._id}
+                className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"
+              >
+                {/* Product */}
+                <TableCell className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src={p.images?.[0] || "/placeholder.png"}
+                      alt={p.title}
+                      width={48}
+                      height={48}
+                      className="rounded-md border border-gray-200 dark:border-gray-700"
+                    />
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                      {p.title}
+                    </span>
+                  </div>
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Project Name
+
+                {/* Category */}
+                <TableCell className="px-6 py-4 text-gray-600 dark:text-gray-300">
+                  {p.categoryId?.title}
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Team
+
+                {/* Seller */}
+                <TableCell className="px-6 py-4 text-gray-600 dark:text-gray-300">
+                  {p.sellerId?.name || "Admin"}
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Status
+
+                {/* Price */}
+                <TableCell className="px-6 py-4 text-right font-medium">
+                  ₹{p.finalPrice}
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Budget
+
+                {/* Status */}
+                <TableCell className="px-6 py-4 text-center">
+                  <Badge size="sm" color={p.isActive ? "success" : "error"}>
+                    {p.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                </TableCell>
+
+                {/* Actions */}
+                <TableCell className="px-6 py-4 text-center">
+                  <button
+                    onClick={() => setOpenDetail(p)}
+                    className="px-3 py-1.5 rounded-md bg-purple-600 text-white text-sm hover:bg-purple-700 transition"
+                  >
+                    View
+                  </button>
                 </TableCell>
               </TableRow>
-            </TableHeader>
-
-            {/* Table Body */}
-            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {tableData.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="px-5 py-4 sm:px-6 text-start">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 overflow-hidden rounded-full">
-                        <Image
-                          width={40}
-                          height={40}
-                          src={order.user.image}
-                          alt={order.user.name}
-                        />
-                      </div>
-                      <div>
-                        <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                          {order.user.name}
-                        </span>
-                        <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
-                          {order.user.role}
-                        </span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                    {order.projectName}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                    <div className="flex -space-x-2">
-                      {order.team.images.map((teamImage, index) => (
-                        <div
-                          key={index}
-                          className="w-6 h-6 overflow-hidden border-2 border-white rounded-full dark:border-gray-900"
-                        >
-                          <Image
-                            width={24}
-                            height={24}
-                            src={teamImage}
-                            alt={`Team member ${index + 1}`}
-                            className="w-full"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                    <Badge
-                      size="sm"
-                      color={
-                        order.status === "Active"
-                          ? "success"
-                          : order.status === "Pending"
-                          ? "warning"
-                          : "error"
-                      }
-                    >
-                      {order.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    {order.budget}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
 
-
-
-      {/* Modal For New Product */}
-
-        <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
-      <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
-        <form className="flex flex-col" encType="multipart/form-data">
-          <div className="custom-scrollbar h-[450px] overflow-y-auto px-2 pb-3">
-            <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">Add Product</h5>
-
-            <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-              <div>
-                <Label>Title</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} required={true}/>
-              </div>
-
-              <div>
-                <Label>Seller</Label>
-                <select
-                  value={sellerId}
-                  onChange={(e) => setSellerId(e.target.value)}
-                  className="w-full p-2 border rounded-md dark:bg-gray-900 dark:text-white/90"
-                  required
-                >
-                  <option value="">Select Seller</option>
-                  {sellers.map((s) => (
-                    <option key={s._id} value={s._id}>
-                      {s.name} ({s.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <Label>Category</Label>
-                <select
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  className="w-full p-2 border rounded-md dark:bg-gray-900 dark:text-white/90"
-                  required
-                >
-                  <option value="">Select Category</option>
-                  {categories.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <Label>Price</Label>
-                <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} required={true}/>
-              </div>
-
-              <div>
-                <Label>Stock</Label>
-                <Input type="number" value={stock} onChange={(e) => setStock(e.target.value)} required={true}/>
-              </div>
-
-              <div>
-                <Label>Discount (%)</Label>
-                <Input type="number" value={discountPercent} onChange={(e) => setDiscountPercent(e.target.value)} required={true}/>
-              </div>
-
-              <div className="col-span-2">
-                <Label>Description</Label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                  className="w-full border rounded-md p-2 dark:bg-gray-900 dark:text-white/90"
-                  required
-                />
-              </div>
-
-              <div className="col-span-2">
-                <Label>Upload Image</Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) setImage(file);
-                  }}
-                  required={true}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-            <Button size="sm" variant="outline" onClick={closeModal}>
-              Close
-            </Button>
-            <Button size="sm" onClick={()=> handleSave}>
-              Add Product
-            </Button>
-          </div>
-        </form>
-      </div>
-    </Modal>
-    </div>
-
-    {/* Alert Toast */}
-      {alert && (
-        <div className="mb-4">
-          <Alert
-            variant={alert.variant}
-            title={alert.title}
-            message={alert.message}
-          />
-        </div>
+      {/* Modals */}
+      {openAdd && (
+        <ProductAdd
+          open
+          onClose={() => setOpenAdd(false)}
+          onSave={handleAdd}
+        />
       )}
-    </>
+      {openUpdate && (
+        <ProductUpdate
+          open
+          product={openUpdate}
+          onClose={() => setOpenUpdate(null)}
+          onSave={handleUpdate}
+        />
+      )}
+      {openDetail && (
+        <ProductDetail
+          product={openDetail}
+          open
+          onClose={() => setOpenDetail(null)}
+          onDelete={handleDelete}
+          onEdit={(p) => {
+            setOpenDetail(null);
+            setOpenUpdate(p);
+          }}
+        />
+      )}
+    </div>
   );
 }

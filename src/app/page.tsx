@@ -1,80 +1,72 @@
+"use client";
+
+import Link from "next/link";
+import { Grid, PlayCircle, ShoppingBag } from "lucide-react";
+
 export default function Home() {
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">Welcome to NextTail</h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-            Build beautiful, responsive websites with Next.js and Tailwind CSS
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button className="bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition duration-300">
-              Get Started
-            </button>
-            <button className="bg-transparent border-2 border-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition duration-300">
-              Learn More
-            </button>
-          </div>
-        </div>
-      </section>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-700 via-purple-700 to-pink-600 text-white relative overflow-hidden">
+      {/* Background Glow */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse delay-200" />
+      </div>
 
-      {/* Features Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">Features</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                title: "Fast Performance",
-                description: "Next.js ensures your site loads quickly with automatic code splitting and optimized builds.",
-                icon: (
-                  <svg className="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                ),
-              },
-              {
-                title: "Responsive Design",
-                description: "Tailwind CSS makes it easy to build responsive designs that work on any device.",
-                icon: (
-                  <svg className="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                ),
-              },
-              {
-                title: "Easy Customization",
-                description: "Tailwind's utility-first approach makes customization a breeze.",
-                icon: (
-                  <svg className="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                ),
-              },
-            ].map((feature, index) => (
-              <div key={index} className="bg-gray-50 p-6 rounded-lg shadow-sm hover:shadow-md transition duration-300">
-                <div className="mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Content */}
+      <div className="relative z-10 max-w-3xl text-center px-6">
+        <h1 className="text-5xl md:text-6xl font-extrabold drop-shadow-lg">
+          Welcome to Admin Dashboard ✨
+        </h1>
+        <p className="mt-6 text-lg md:text-xl text-white/90">
+          Manage <span className="font-semibold">Fun & Enjoy</span> and{" "}
+          <span className="font-semibold">Dream Mart</span> from one place.  
+        </p>
 
-      {/* CTA Section */}
-      <section className="bg-gray-100 py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-6 text-gray-900">Ready to get started?</h2>
-          <p className="text-xl text-gray-600 mb-8">
-            Join thousands of developers building amazing websites with Next.js and Tailwind CSS.
-          </p>
-          <button className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-300">
-            Sign Up Now
-          </button>
+        {/* Two App Cards */}
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Fun & Enjoy */}
+          <Link
+            href="/admin"
+            className="group p-8 rounded-2xl bg-white/10 backdrop-blur-xl shadow-xl hover:bg-white/20 transition transform hover:scale-105"
+          >
+            <div className="flex flex-col items-center text-center">
+              <PlayCircle className="w-14 h-14 text-yellow-300 group-hover:scale-110 transition-transform" />
+              <h3 className="mt-4 text-2xl font-bold">Fun & Enjoy</h3>
+              <p className="mt-2 text-sm text-white/80">
+                Manage users, watch hours, referrals, and rewards for the Short Video app.
+              </p>
+            </div>
+          </Link>
+
+          {/* Dream Mart */}
+          <Link
+            href="/admin"
+            className="group p-8 rounded-2xl bg-white/10 backdrop-blur-xl shadow-xl hover:bg-white/20 transition transform hover:scale-105"
+          >
+            <div className="flex flex-col items-center text-center">
+              <ShoppingBag className="w-14 h-14 text-green-300 group-hover:scale-110 transition-transform" />
+              <h3 className="mt-4 text-2xl font-bold">Dream Mart</h3>
+              <p className="mt-2 text-sm text-white/80">
+                Manage products, orders, coupons, and system wallet for the E-Commerce app.
+              </p>
+            </div>
+          </Link>
         </div>
-      </section>
+        <div className="mt-10">
+          <Link
+            href="/admin"
+            className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white text-indigo-600 font-semibold text-lg shadow-xl hover:scale-105 hover:shadow-2xl transition transform"
+          >
+            <Grid className="w-6 h-6" />
+            Go to Dashboard
+          </Link>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="absolute bottom-6 text-sm text-white/70">
+        Use the sidebar inside each app to explore more features.
+      </div>
     </div>
-  )
+  );
 }
