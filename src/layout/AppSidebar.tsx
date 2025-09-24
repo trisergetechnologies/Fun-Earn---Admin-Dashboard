@@ -353,7 +353,7 @@ const AppSidebar: React.FC = () => {
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
-        <Link href="/">
+        {/* <Link href="/">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
               <Image
@@ -378,6 +378,18 @@ const AppSidebar: React.FC = () => {
               width={32}
               height={32}
             />
+          )}
+        </Link> */}
+
+        <Link href="/" className="flex items-center">
+          {isExpanded || isHovered || isMobileOpen ? (
+            <span className="text-2xl font-extrabold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-wide">
+              MP Dreams
+            </span>
+          ) : (
+            <span className="w-10 h-10 flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold text-lg shadow-md">
+              M
+            </span>
           )}
         </Link>
       </div>
