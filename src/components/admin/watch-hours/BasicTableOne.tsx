@@ -37,30 +37,32 @@ export default function ShortVideoUsersTable() {
   const [sortBy, setSortBy] = useState("watchtimeDesc");
 
   const [resetModalOpen, setResetModalOpen] = useState(false); // modal toggle
+  const [payAllModalOpen, setPayAllModalOpen] = useState(false);
 
   // const token = process.env.NEXT_PUBLIC_ADMIN_TOKEN;
   let token: any
 
+  const fetchUsers = async () => {
+    setLoading(true);
+    token = getToken();
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/getuserswithwatchtime`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUsers(res.data.data || []);
+    } catch (err) {
+      toast.error("❌ Failed to fetch users!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch users
   useEffect(() => {
-    token = getToken();
-    const fetchUsers = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/getuserswithwatchtime`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setUsers(res.data.data || []);
-      } catch (err) {
-        toast.error("❌ Failed to fetch users!");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchUsers();
   }, [token]);
-  
+
   // Filter + sort
   const filteredUsers = users
     .filter((u) =>
@@ -83,12 +85,18 @@ export default function ShortVideoUsersTable() {
       return;
     }
     try {
-      await axios.put(
+      const res = await axios.put(
         `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/creditwatchtimeearnings`,
         { amount, userId: id, bulk: false },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(`💸 Payment of ₹${amount} sent successfully!`);
+      if (res.data.success) {
+        toast.success(`✅ ${res.data.message}`);
+        fetchUsers();
+
+      } else {
+        toast.error(res.data.message || "❌ Transfer failed");
+      }
       setPayAmounts((prev) => ({ ...prev, [id]: 0 }));
     } catch (err) {
       toast.error("❌ Error making payment");
@@ -96,20 +104,28 @@ export default function ShortVideoUsersTable() {
   };
 
   // Pay All
-  const handlePayAll = async () => {
+  const handlePayAllConfirmed = async () => {
+    setPayAllModalOpen(false);
+
     if (!bulkAmount || bulkAmount <= 0) {
       toast.warn("⚠️ Enter a valid bulk amount!");
       return;
     }
-    if (!confirm(`Pay ₹${bulkAmount} to ALL users?`)) return;
 
     try {
-      await axios.put(
+      const res = await axios.put(
         `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/creditwatchtimeearnings`,
         { amount: bulkAmount, bulk: true },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(`✅ ₹${bulkAmount} paid to all users successfully!`);
+
+      if (res.data.success) {
+        toast.success(`✅ ${res.data.message}`);
+        fetchUsers();
+      } else {
+        toast.error(res.data.message || "❌ Transfer failed");
+      }
+
       setBulkAmount(0);
     } catch (err) {
       toast.error("❌ Error paying all users");
@@ -119,12 +135,18 @@ export default function ShortVideoUsersTable() {
   // Reset All confirmed
   const handleResetAllConfirmed = async () => {
     try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/resetall`,
+      const res = await axios.put(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/resetallwatchtime`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success("♻️ All users’ watch time reset successfully!");
+      if (res.data.success) {
+        toast.success(`✅ ${res.data.message}`);
+        fetchUsers();
+
+      } else {
+        toast.error(res.data.message || "❌ Transfer failed");
+      }
       setUsers((prev) =>
         prev.map((u) => ({ ...u, shortVideoProfile: { watchTime: 0 } }))
       );
@@ -149,7 +171,7 @@ export default function ShortVideoUsersTable() {
             className="border px-3 py-2 rounded-md text-sm w-40 dark:bg-gray-900 dark:border-gray-700"
           />
           <button
-            onClick={handlePayAll}
+            onClick={() => setPayAllModalOpen(true)}
             className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium shadow hover:bg-green-700"
           >
             💸 Pay All
@@ -213,11 +235,10 @@ export default function ShortVideoUsersTable() {
               filteredUsers.map((user, index) => (
                 <TableRow
                   key={user._id}
-                  className={`transition ${
-                    index % 2 === 0
+                  className={`transition ${index % 2 === 0
                       ? "bg-white dark:bg-gray-800"
                       : "bg-gray-50 dark:bg-gray-900"
-                  } hover:bg-indigo-50 dark:hover:bg-indigo-900/30`}
+                    } hover:bg-indigo-50 dark:hover:bg-indigo-900/30`}
                 >
                   {/* User */}
                   <TableCell className="px-4 py-3">
@@ -312,6 +333,40 @@ export default function ShortVideoUsersTable() {
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
               >
                 Yes, Reset All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pay All Modal */}
+      {payAllModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setPayAllModalOpen(false)}
+          />
+          <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h2 className="text-lg font-semibold mb-4 text-green-600">
+              Confirm Bulk Payment
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              ⚠️ You are about to pay <strong>₹{bulkAmount}</strong> to{" "}
+              <strong>ALL users</strong>.
+              Are you sure you want to continue?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setPayAllModalOpen(false)}
+                className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePayAllConfirmed}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                ✅ Yes, Pay All
               </button>
             </div>
           </div>
