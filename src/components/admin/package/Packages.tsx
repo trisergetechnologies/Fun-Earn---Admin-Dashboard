@@ -126,7 +126,7 @@ export default function Packages() {
         {/* Packages Container - Centered for 2 cards */}
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 justify-center">
-            {packages.map((pkg, index) => {
+            {packages?.map((pkg, index) => {
               const theme = getPackageTheme(index);
               return (
                 <div key={pkg._id} className="group relative">

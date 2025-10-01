@@ -55,7 +55,7 @@ export function ProductDetail({
         {/* Images */}
         {product.images?.length > 0 && (
           <div className="flex gap-3 overflow-x-auto mb-6">
-            {product.images.map((img, i) => (
+            {product?.images?.map((img, i) => (
               <img
                 key={i}
                 src={img}

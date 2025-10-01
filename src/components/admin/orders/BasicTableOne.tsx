@@ -189,7 +189,7 @@ export default function BasicTableOne() {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredOrders.map((order) => (
+              filteredOrders?.map((order) => (
                 <TableRow
                   key={order._id}
                   className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition"
@@ -209,7 +209,7 @@ export default function BasicTableOne() {
                   {/* Items preview */}
                   <TableCell className="px-4 py-3">
                     <div className="flex -space-x-2">
-                      {order.items.slice(0, 3).map((item, i) => (
+                      {order.items?.slice(0, 3).map((item, i) => (
                         <Image
                           key={i}
                           src={item.productThumbnail}
@@ -221,7 +221,7 @@ export default function BasicTableOne() {
                       ))}
                       {order.items.length > 3 && (
                         <span className="text-xs text-gray-500 ml-2">
-                          +{order.items.length - 3} more
+                          +{order.items?.length - 3} more
                         </span>
                       )}
                     </div>

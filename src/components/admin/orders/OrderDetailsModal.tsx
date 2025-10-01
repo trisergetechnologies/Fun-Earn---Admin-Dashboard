@@ -113,7 +113,7 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
               Ordered Items
             </h3>
             <div className="space-y-3">
-              {order.items.map((item: any, i: number) => (
+              {order.items?.map((item: any, i: number) => (
                 <div
                   key={i}
                   className="flex gap-4 p-3 border rounded-lg bg-gray-50 dark:bg-gray-800"
@@ -206,7 +206,7 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
             </h3>
             {order.trackingUpdates?.length > 0 ? (
               <div className="space-y-3">
-                {order.trackingUpdates.map((t: any, i: number) => (
+                {order.trackingUpdates?.map((t: any, i: number) => (
                   <div
                     key={i}
                     className="flex items-start gap-3 p-2 border-b last:border-none"

@@ -142,7 +142,7 @@ export default function ProductTable() {
           </TableHeader>
 
           <TableBody>
-            {filteredProducts.map((p) => (
+            {filteredProducts?.map((p) => (
               <TableRow
                 key={p._id}
                 className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"

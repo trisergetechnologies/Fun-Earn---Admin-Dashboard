@@ -113,7 +113,7 @@ export default function ChangeStatusModal({ open, onClose, order, onUpdated }: a
               onChange={(e) => setStatus(e.target.value)}
               className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-700"
             >
-              {validStatuses.map((s) => (
+              {validStatuses?.map((s) => (
                 <option key={s} value={s}>
                   {s.charAt(0).toUpperCase() + s.slice(1)}
                 </option>

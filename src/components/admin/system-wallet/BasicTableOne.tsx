@@ -354,7 +354,7 @@ export default function SystemEarningLogs() {
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedLogs.map((log, i) => (
+                sortedLogs?.map((log, i) => (
                   <TableRow
                     key={log._id}
                     className={`transition ${
