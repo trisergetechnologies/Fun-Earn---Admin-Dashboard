@@ -252,7 +252,7 @@ export default function BasicTableOne() {
                         <Image
                           width={40}
                           height={40}
-                          src={user.image || "/images/user/user-21.jpg"}
+                          src={user.image || "https://avatar.iran.liara.run/public"}
                           alt={user.name}
                         />
                       </div>

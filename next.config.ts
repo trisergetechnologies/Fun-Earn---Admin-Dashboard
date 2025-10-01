@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "amp-api.mpdreams.in", // ✅ allow your product images
       },
+      {
+        protocol: "https",
+        hostname: "avatar.iran.liara.run",
+      },
     ],
   },
   typescript: {
