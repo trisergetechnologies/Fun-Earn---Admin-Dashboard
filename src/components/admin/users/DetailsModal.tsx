@@ -4,6 +4,10 @@
 import Image from "next/image";
 import { X, Trash2, ShoppingBag, Video, Wallet } from "lucide-react";
 import Badge from "@/components/ui/badge/Badge";
+import { useState } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import axios from "axios";
+import { getToken } from "@/helper/tokenHelper";
 
 interface Address {
   addressName: string;
@@ -36,6 +40,7 @@ interface Package {
 }
 
 interface UserDetails {
+  _id: string;
   name: string;
   email?: string;
   phone?: string;
@@ -80,6 +85,42 @@ export default function DetailsModal({
   user,
 }: DetailsModalProps) {
   if (!open || !user) return null;
+
+  const [rechargeAmount, setRechargeAmount] = useState("");
+
+  const handleRecharge = async () => {
+    if (!rechargeAmount || Number(rechargeAmount) <= 0) {
+      toast.error("Enter a valid recharge amount");
+      return;
+    }
+
+    try {
+      const url = `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/rechargeshortvideowallet`
+      const token = getToken();
+
+      const { data } = await axios.post(
+        url,
+        { userId: user._id, amount: Number(rechargeAmount) },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (data.success) {
+        toast.success(`Recharged ₹${rechargeAmount} successfully 🎉`);
+        setRechargeAmount("");
+      } else {
+        toast.warn(data.message || "Recharge failed");
+      }
+    } catch (err) {
+      console.error("Recharge error:", err);
+      toast.error(
+        err.response?.data?.message || "Something went wrong, please try again"
+      );
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -217,24 +258,48 @@ export default function DetailsModal({
             <section>
               <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">💰 Wallets</h3>
               <div className="grid grid-cols-3 gap-5">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-5 rounded-xl shadow-lg">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-5 rounded-xl shadow-lg relative">
                   <Wallet className="w-6 h-6 mb-2" />
-                  <p className="font-medium">Short Video</p>
-                  <p className="text-2xl font-bold">₹{user.wallets.shortVideoWallet || 0}</p>
+                  <p className="font-medium">Fun & Enjoy</p>
+                  <p className="text-2xl font-bold">
+                    ₹{user.wallets.shortVideoWallet || 0}
+                  </p>
+
+                  {/* Recharge Input */}
+                  <div className="mt-4 bg-white/10 rounded-lg p-2 flex gap-2 items-center">
+                    <input
+                      type="number"
+                      placeholder="Enter amount"
+                      className="flex-1 px-2 py-1 text-sm rounded bg-white/20 text-white placeholder-white/70 focus:outline-none"
+                      value={rechargeAmount}
+                      onChange={(e) => setRechargeAmount(e.target.value)}
+                    />
+                    <button
+                      onClick={handleRecharge}
+                      className="px-3 py-1.5 text-sm font-semibold rounded bg-yellow-400 text-gray-900 hover:bg-yellow-500"
+                    >
+                      Recharge
+                    </button>
+                  </div>
                 </div>
+
                 <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-5 rounded-xl shadow-lg">
                   <Wallet className="w-6 h-6 mb-2" />
                   <p className="font-medium">E-Cart</p>
                   <p className="text-2xl font-bold">₹{user.wallets.eCartWallet || 0}</p>
                 </div>
+
                 <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-5 rounded-xl shadow-lg">
                   <Wallet className="w-6 h-6 mb-2" />
                   <p className="font-medium">Rewards</p>
-                  <p className="text-2xl font-bold">{user.wallets.rewardWallet?.length || 0} coupons</p>
+                  <p className="text-2xl font-bold">
+                    {user.wallets.rewardWallet?.length || 0} coupons
+                  </p>
                 </div>
               </div>
             </section>
           )}
+
         </div>
 
         {/* Footer */}
@@ -254,6 +319,7 @@ export default function DetailsModal({
           </button>
         </div>
       </div>
+      <ToastContainer position="top-right" autoClose={2500} theme="colored" />
     </div>
   );
 }
