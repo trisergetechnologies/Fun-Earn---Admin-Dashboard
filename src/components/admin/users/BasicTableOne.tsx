@@ -236,6 +236,7 @@ export default function BasicTableOne() {
                 <TableCell isHeader>Referral Code</TableCell>
                 <TableCell isHeader>Serial Number(Package)</TableCell>
                 <TableCell isHeader>Package</TableCell>
+                <TableCell isHeader>F&E Wallet</TableCell>
                 <TableCell isHeader>Status</TableCell>
                 <TableCell isHeader>More</TableCell>
               </TableRow>
@@ -311,6 +312,8 @@ export default function BasicTableOne() {
                       </h2>
                     </div>
                   </TableCell>
+
+                  <TableCell className="px-5 py-4">₹{user.wallets.shortVideoWallet?.toFixed(2) || 0}</TableCell>
 
                   {/* Status */}
                   <TableCell className="px-5 py-4">

@@ -262,7 +262,7 @@ export default function DetailsModal({
                   <Wallet className="w-6 h-6 mb-2" />
                   <p className="font-medium">Fun & Enjoy</p>
                   <p className="text-2xl font-bold">
-                    ₹{user.wallets.shortVideoWallet || 0}
+                    ₹{user.wallets.shortVideoWallet?.toFixed(2) || 0}
                   </p>
 
                   {/* Recharge Input */}
@@ -286,7 +286,7 @@ export default function DetailsModal({
                 <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-5 rounded-xl shadow-lg">
                   <Wallet className="w-6 h-6 mb-2" />
                   <p className="font-medium">E-Cart</p>
-                  <p className="text-2xl font-bold">₹{user.wallets.eCartWallet || 0}</p>
+                  <p className="text-2xl font-bold">₹{user.wallets.eCartWallet?.toFixed(2) || 0}</p>
                 </div>
 
                 <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-5 rounded-xl shadow-lg">
