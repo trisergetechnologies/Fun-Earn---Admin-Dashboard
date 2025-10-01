@@ -97,7 +97,7 @@ export default function DetailsModal({
         <div className="flex items-center gap-5 border-b border-gray-200 dark:border-gray-700 pb-5">
           <div className="w-20 h-20 overflow-hidden rounded-full ring-4 ring-blue-500">
             <Image
-              src={user.image || "/images/user/user-21.jpg"}
+              src={user.image || "https://avatar.iran.liara.run/public"}
               alt={user.name}
               width={80}
               height={80}
