@@ -98,7 +98,7 @@ export default function DetailsModal({
       const url = `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/rechargeshortvideowallet`
       const token = getToken();
 
-      const { data } = await axios.post(
+      const { data } = await axios.put(
         url,
         { userId: user._id, amount: Number(rechargeAmount) },
         {
