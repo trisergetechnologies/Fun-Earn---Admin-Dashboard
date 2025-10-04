@@ -72,7 +72,7 @@ export default function SystemEarningLogs() {
         toast.success(res.data.message);
         setWallet((prev) => ({
           ...prev!,
-          totalBalance: res.data.data.wallet.totalBalance,
+          totalBalance: res.data?.data?.wallet?.totalBalance,
         }));
         setRechargeAmount("");
         setRechargeContext("");
