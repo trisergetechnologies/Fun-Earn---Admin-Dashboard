@@ -49,6 +49,47 @@ export default function SystemEarningLogs() {
   const [confirmWeeklyOpen, setConfirmWeeklyOpen] = useState(false);
   const [confirmMonthlyOpen, setConfirmMonthlyOpen] = useState(false);
 
+  const [rechargeOpen, setRechargeOpen] = useState(false);
+  const [rechargeAmount, setRechargeAmount] = useState("");
+  const [rechargeContext, setRechargeContext] = useState("");
+  const [confirmRecharge, setConfirmRecharge] = useState(false);
+
+  const handleRecharge = async () => {
+    if (!rechargeAmount || Number(rechargeAmount) <= 0) {
+      toast.error("⚠️ Please enter a valid amount");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await axios.put(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/rechargesystemwallet`,
+        { amount: Number(rechargeAmount), context: rechargeContext || "Admin recharge" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.data.success) {
+        toast.success(res.data.message);
+        setWallet((prev) => ({
+          ...prev!,
+          totalBalance: res.data.data.wallet.totalBalance,
+        }));
+        setRechargeAmount("");
+        setRechargeContext("");
+        setConfirmRecharge(false);
+        setRechargeOpen(false);
+        fetchData(); // refresh logs
+      } else {
+        toast.error(res.data.message || "❌ Recharge failed");
+      }
+    } catch (err) {
+      console.error("Recharge Error:", err);
+      toast.error("❌ Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ✅ keep your token intact
   let token: any
 
@@ -170,6 +211,11 @@ export default function SystemEarningLogs() {
     }
   };
 
+  const rechargeCloseHandle =()=>{
+    setConfirmRecharge(false);
+    setRechargeOpen(false);
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Wallet Summary */}
@@ -198,6 +244,12 @@ export default function SystemEarningLogs() {
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-6">
+        <button
+          onClick={() => setRechargeOpen(true)}
+          className="w-full sm:w-auto px-6 py-3 rounded-xl text-lg font-semibold shadow-lg bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white hover:scale-105 transition"
+        >
+          ⚡ Recharge Wallet
+        </button>
         <button
           onClick={() => setConfirmWeeklyOpen(true)}
           className="w-full sm:w-auto px-6 py-3 rounded-xl text-lg font-semibold shadow-lg bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:scale-105 transition"
@@ -282,6 +334,96 @@ export default function SystemEarningLogs() {
           </div>
         </div>
       )}
+
+
+
+
+      {/* Recharge Modal */}
+      {rechargeOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => rechargeCloseHandle() }
+          />
+          <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-6 animate-fadeIn">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+              ⚡ Recharge System Wallet
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              You are about to <strong>add funds</strong> directly into the system’s <strong>Total Balance</strong>.
+              This action is irreversible and will be logged.
+            </p>
+
+            {/* Amount Input */}
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                Amount (₹)
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={rechargeAmount}
+                onChange={(e) => setRechargeAmount(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2 dark:bg-gray-800 dark:border-gray-700"
+                placeholder="Enter recharge amount"
+              />
+            </div>
+
+            {/* Context Input */}
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                Context / Notes
+              </label>
+              <input
+                type="text"
+                value={rechargeContext}
+                onChange={(e) => setRechargeContext(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2 dark:bg-gray-800 dark:border-gray-700"
+                placeholder="Optional note (e.g. Initial funding)"
+              />
+            </div>
+
+            {/* Confirm Step */}
+            {confirmRecharge ? (
+              <div className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700">
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  ⚠️ Are you sure you want to add <strong>₹{rechargeAmount}</strong>
+                  to the System Wallet? This cannot be undone.
+                </p>
+              </div>
+            ) : null}
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => rechargeCloseHandle()}
+                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              {!confirmRecharge ? (
+                <button
+                  onClick={() => setConfirmRecharge(true)}
+                  className="px-5 py-2 bg-yellow-500 text-white rounded-lg font-semibold shadow hover:bg-yellow-600 transition"
+                >
+                  Proceed
+                </button>
+              ) : (
+                <button
+                  onClick={handleRecharge}
+                  disabled={loading}
+                  className="px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition disabled:opacity-50"
+                >
+                  {loading ? "Recharging..." : "Confirm Recharge"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+)}
+
+
 
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center border-b pb-4">
