@@ -11,6 +11,7 @@ import {
   ShoppingBasket as ShoppingBasketIcon,
   Settings as SettingsIcon,
   Package,
+  IndianRupeeIcon,
 } from "lucide-react";
 
 const menu = [
@@ -20,6 +21,7 @@ const menu = [
   { icon: <TimeIcon className="w-6 h-6" />, name: "Watch Hours", path: "/admin/watch-hours" },
   { icon: <WalletIcon className="w-6 h-6" />, name: "System Wallet & Logs", path: "/admin/system-wallet" },
   { icon: <ShoppingBasketIcon className="w-6 h-6" />, name: "Orders", path: "/admin/orders" },
+  { icon: <IndianRupeeIcon className="w-6 h-6" />, name: "Handle Payouts", path: "/admin/payments" },
   { icon: <Package className="w-6 h-6" />, name: "Packages", path: "/admin/package" },
   { icon: <SettingsIcon className="w-6 h-6" />, name: "Settings", path: "/admin/settings" },
 ];
