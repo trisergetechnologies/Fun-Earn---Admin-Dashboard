@@ -20,7 +20,7 @@ import {
   UserCircleIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
-import { PackageIcon, ShoppingBasketIcon, UserSearchIcon, WalletIcon } from "lucide-react";
+import { IndianRupeeIcon, PackageIcon, ShoppingBasketIcon, UserSearchIcon, WalletIcon } from "lucide-react";
 
 type NavItem = {
   name: string;
@@ -45,11 +45,6 @@ const navItems: NavItem[] = [
     name: "Products",
     path: "/admin/product",
   },
-  // {
-  //   icon: <CalenderIcon />,
-  //   name: "Categories",
-  //   path: "/admin/category",
-  // },
   {
     icon: <UserCircleIcon />,
     name: "Users",
@@ -69,6 +64,11 @@ const navItems: NavItem[] = [
     icon: <ShoppingBasketIcon />,
     name: "Orders",
     path: "/admin/orders",
+  },
+  {
+    icon: <IndianRupeeIcon />,
+    name: "Handle Payouts",
+    path: "/admin/payments",
   },
   {
     icon: <PackageIcon />,
