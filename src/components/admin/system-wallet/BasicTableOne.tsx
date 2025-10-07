@@ -193,7 +193,7 @@ export default function SystemEarningLogs() {
   const handlePayMonthly = async () => {
     try {
       const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/paymonthlyreward`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/payoutmonthlyrewards`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -571,7 +571,7 @@ export default function SystemEarningLogs() {
             onClick={() => setConfirmMonthlyOpen(false)}
           />
           <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6 w-full max-w-md">
-            <h2 className="text-xl text-red-600 font-bold mb-4">This feature is coming soon.</h2>
+            {/* <h2 className="text-xl text-red-600 font-bold mb-4">This feature is coming soon.</h2> */}
             <h2 className="text-lg font-semibold mb-4">Confirm Monthly Reward</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
               Are you sure you want to distribute this month’s rewards to all
@@ -585,7 +585,7 @@ export default function SystemEarningLogs() {
                 Cancel
               </button>
               <button
-              disabled={true}
+              // disabled={true}
                 onClick={handlePayMonthly}
                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
               >
