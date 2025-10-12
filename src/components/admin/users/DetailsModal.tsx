@@ -8,6 +8,8 @@ import { useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import axios from "axios";
 import { getToken } from "@/helper/tokenHelper";
+import ConfirmModal from "./ConfirmModal";
+import { useRouter } from "next/navigation";
 
 interface Address {
   addressName: string;
@@ -75,6 +77,7 @@ interface DetailsModalProps {
   open: boolean;
   onClose: () => void;
   onDelete: () => void;
+  refreshUser: () => void;
   user: UserDetails | null;
 }
 
@@ -83,10 +86,19 @@ export default function DetailsModal({
   onClose,
   onDelete,
   user,
+  refreshUser
 }: DetailsModalProps) {
   if (!open || !user) return null;
 
+  const router = useRouter();
+
   const [rechargeAmount, setRechargeAmount] = useState("");
+  const [activating, setActivating] = useState(false);
+
+  const [showEcartModal, setShowEcartModal] = useState(false);
+  const [showShortVideoModal, setShowShortVideoModal] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const [stateAddress, setStateAddress] = useState("");
 
   const handleRecharge = async () => {
     if (!rechargeAmount || Number(rechargeAmount) <= 0) {
@@ -119,6 +131,70 @@ export default function DetailsModal({
       toast.error(
         err.response?.data?.message || "Something went wrong, please try again"
       );
+    }
+  };
+
+  const handleActivateEcart = async () => {
+    if (!stateAddress) return;
+
+    try {
+      setActivating(true);
+      const token = getToken();
+      const url = `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/adminecartactivate`;
+
+      const { data } = await axios.put(
+        url,
+        { userId: user._id, state_address: stateAddress },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (data.success) {
+        toast.success("E-Cart activated successfully 🎉");
+        setShowEcartModal(false);
+        refreshUser();
+      } else {
+        toast.warn(data.message);
+        setShowEcartModal(false);
+      }
+    } catch (err) {
+      console.error("E-Cart Activation Error:", err);
+      toast.error(err?.response?.data?.message || "Failed to activate E-Cart");
+      setShowEcartModal(false);
+    } finally {
+      setActivating(false);
+      setShowEcartModal(false);
+    }
+  };
+
+  const handleActivateShortVideo = async (referralCode: string) => {
+    if (!referralCode) return;
+
+    try {
+      setActivating(true);
+      const token = getToken();
+      const url = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/user/adminshortvideoactivate`;
+
+      const { data } = await axios.put(
+        url,
+        { userId: user._id, referralCode },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (data.success) {
+        toast.success("Short Video activated successfully 🎉");
+        setShowShortVideoModal(false);
+        refreshUser();
+      } else {
+        toast.warn(data.message);
+        setShowShortVideoModal(false);
+      }
+    } catch (err) {
+      console.error("Short Video Activation Error:", err);
+      toast.error(err?.response?.data?.message || "Failed to activate Short Video");
+      setShowShortVideoModal(false);
+    } finally {
+      setActivating(false);
+      setShowShortVideoModal(false);
     }
   };
 
@@ -192,6 +268,39 @@ export default function DetailsModal({
                   <Badge size="md" color="info">
                     <Video className="w-4 h-4 mr-1" /> Short Video
                   </Badge>
+                )}
+              </div>
+            </section>
+          )}
+
+
+          {/* Admin Activation Options */}
+          {user.applications && (
+            <section className="mt-6">
+              <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
+                ⚙️ Admin Actions
+              </h3>
+              <div className="flex flex-wrap gap-4">
+                {/* E-Cart Activation */}
+                {!user.applications.includes("eCart") && (
+                  <button
+                    onClick={() => setShowEcartModal(true)}
+                    disabled={activating}
+                    className="flex items-center gap-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 font-semibold shadow"
+                  >
+                    <ShoppingBag className="w-4 h-4" /> Activate E-Cart
+                  </button>
+                )}
+
+                {/* Short Video Activation */}
+                {!user.applications.includes("shortVideo") && (
+                  <button
+                    onClick={() => setShowShortVideoModal(true)}
+                    disabled={activating}
+                    className="flex items-center gap-2 px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 font-semibold shadow"
+                  >
+                    <Video className="w-4 h-4" /> Activate Short Video
+                  </button>
                 )}
               </div>
             </section>
@@ -319,6 +428,39 @@ export default function DetailsModal({
           </button>
         </div>
       </div>
+
+
+      {/* Confirm State for E-Cart */}
+      <ConfirmModal
+        open={showEcartModal}
+        title="Activate E-Cart"
+        description="Enter the user's state to activate E-Cart."
+        inputLabel="State"
+        placeholder="e.g. Karnataka"
+        inputValue={stateAddress}
+        setInputValue={setStateAddress}
+        onClose={() => setShowEcartModal(false)}
+        onConfirm={(state) => {
+          if (!state) return;
+          handleActivateEcart();
+        }}
+      />
+
+      {/* Confirm Referral for Short Video */}
+      <ConfirmModal
+        open={showShortVideoModal}
+        title="Activate Short Video"
+        description="Enter a valid referral code from another user to activate this feature."
+        inputLabel="Referral Code"
+        placeholder="e.g. ABC123"
+        inputValue={inputValue}
+        setInputValue={setInputValue}
+        onClose={() => setShowShortVideoModal(false)}
+        onConfirm={(refCode) => {
+          if (!refCode) return;
+          handleActivateShortVideo(refCode);
+        }}
+      />
       <ToastContainer position="top-right" autoClose={2500} theme="colored" />
     </div>
   );

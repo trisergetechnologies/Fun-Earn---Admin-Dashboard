@@ -101,23 +101,23 @@ export default function BasicTableOne() {
 
   let token: any
 
+  const url = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/user/getusers`;
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setUsers(res.data.data); // ✅ your response shape
+    } catch (err) {
+      console.error("Error fetching users", err);
+    }
+  };
+
   // Fetch API
   useEffect(() => {
-    const url = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/user/getusers`;
     token = getToken();
-
-    const fetchUsers = async () => {
-      try {
-        const res = await axios.get(url, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        setUsers(res.data.data); // ✅ your response shape
-      } catch (err) {
-        console.error("Error fetching users", err);
-      }
-    };
     fetchUsers();
   }, []);
 
@@ -355,6 +355,7 @@ export default function BasicTableOne() {
           onDelete={handleDelete}
           open={open}
           onClose={handleClose}
+          refreshUser={()=> fetchUsers()}
           user={selectedUser}
         />
       )}
