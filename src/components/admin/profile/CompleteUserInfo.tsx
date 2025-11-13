@@ -494,6 +494,7 @@ export default function AdminUserCompleteInfo() {
                 <tr className="bg-gray-100">
                   <th className="p-2">Source</th>
                   <th>From User</th>
+                  <th>Sr. No.</th>
                   <th>Amount</th>
                   <th>Status</th>
                   <th>Date</th>
@@ -504,6 +505,7 @@ export default function AdminUserCompleteInfo() {
                   <tr key={e._id} className="border-t">
                     <td className="p-2">{e.source}</td>
                     <td>{e.fromUser.email}</td>
+                    <td>{e.fromUser.serialNumber}</td>
                     <td>{fmt(e.amount)}</td>
                     <td>{e.status}</td>
                     <td>{dt(e.createdAt)}</td>
