@@ -503,7 +503,7 @@ export default function AdminUserCompleteInfo() {
                 {data.recentEarningLogs.map((e: any) => (
                   <tr key={e._id} className="border-t">
                     <td className="p-2">{e.source}</td>
-                    <td>{e.fromUser}</td>
+                    <td>{e.fromUser.email}</td>
                     <td>{fmt(e.amount)}</td>
                     <td>{e.status}</td>
                     <td>{dt(e.createdAt)}</td>
