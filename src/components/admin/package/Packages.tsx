@@ -11,6 +11,7 @@ interface Package {
   name: string;
   price: number;
   membersUpto: number;
+  levelUpto: number;
   description: string;
   color: string;
   icon: string;
@@ -184,7 +185,7 @@ export default function Packages() {
 
                         <div className={`inline-flex items-center gap-2 px-4 py-2 ${theme.accentColor} bg-white/50 dark:bg-gray-800/50 rounded-full border border-current/20`}>
                           <Network className="w-5 h-5" />
-                          <span className="font-semibold">Up to {(pkg.membersUpto/2).toLocaleString()} Levels of User</span>
+                          <span className="font-semibold">Up to {(pkg.levelUpto).toLocaleString()} Levels of User</span>
                         </div>
                       </div>
 
