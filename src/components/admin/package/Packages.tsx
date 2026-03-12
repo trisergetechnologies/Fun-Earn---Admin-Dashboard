@@ -123,9 +123,9 @@ export default function Packages() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="container mx-auto px-6 py-16">
 
-        {/* Packages Container - Centered for 2 cards */}
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 justify-center">
+        {/* Packages Container - responsive grid for any number of packages */}
+        <div className="w-full max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8 justify-items-center">
             {packages?.map((pkg, index) => {
               const theme = getPackageTheme(index);
               return (

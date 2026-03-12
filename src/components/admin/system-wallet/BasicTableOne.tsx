@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Badge from "@/components/ui/badge/Badge";
 import {
@@ -13,6 +13,7 @@ import {
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getToken } from "@/helper/tokenHelper";
+import Pagination from "@/components/admin/tables/Pagination";
 
 // ------------------ Types ------------------
 interface Wallet {
@@ -45,6 +46,9 @@ export default function SystemEarningLogs() {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<keyof Log | "">("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const logsLimit = 20;
 
   const [confirmWeeklyOpen, setConfirmWeeklyOpen] = useState(false);
   const [confirmMonthlyOpen, setConfirmMonthlyOpen] = useState(false);
@@ -78,7 +82,8 @@ export default function SystemEarningLogs() {
         setRechargeContext("");
         setConfirmRecharge(false);
         setRechargeOpen(false);
-        fetchData(); // refresh logs
+        fetchLogs(page);
+        fetchWallet();
       } else {
         toast.error(res.data.message || "❌ Recharge failed");
       }
@@ -90,33 +95,47 @@ export default function SystemEarningLogs() {
     }
   };
 
-  // ✅ keep your token intact
-  let token: any
+  const token = getToken();
+  const baseUrlLogs = `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/getsystemearninglogs`;
+  const baseUrlWallet = `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/getsystemwallet`;
 
-  // Fetch Wallet + Logs
-  const fetchData = async () => {
+  const fetchWallet = useCallback(async () => {
+    if (!token) return;
     try {
-      const [walletRes, logsRes] = await Promise.all([
-        axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/getsystemwallet`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        ),
-        axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/getsystemearningLogs`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        ),
-      ]);
+      const walletRes = await axios.get(baseUrlWallet, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setWallet(walletRes.data.data);
-      setLogs(logsRes.data.data.logs);
     } catch (err) {
-      console.error("Error fetching system data", err);
-      toast.error("❌ Failed to fetch system data");
+      console.error("Error fetching wallet", err);
     }
-  };
-  useEffect(() => {
-    token = getToken();
-    fetchData();
   }, [token]);
+
+  const fetchLogs = useCallback(async (pageNum: number = 1) => {
+    if (!token) return;
+    try {
+      const params: Record<string, string | number> = { page: pageNum, limit: logsLimit };
+      if (search.trim()) params.search = search.trim();
+      const logsRes = await axios.get(baseUrlLogs, {
+        headers: { Authorization: `Bearer ${token}` },
+        params,
+      });
+      setLogs(logsRes.data?.data?.logs ?? []);
+      const pag = logsRes.data?.data?.pagination;
+      if (pag) setTotalPages(pag.totalPages ?? 1);
+    } catch (err) {
+      console.error("Error fetching logs", err);
+      toast.error("❌ Failed to fetch logs");
+    }
+  }, [token, search]);
+
+  useEffect(() => {
+    fetchWallet();
+  }, [fetchWallet]);
+
+  useEffect(() => {
+    fetchLogs(page);
+  }, [fetchLogs, page]);
 
     // Handle fund transfer
   const handleTransfer = async () => {
@@ -178,7 +197,8 @@ export default function SystemEarningLogs() {
       );
       if (res.data.success) {
         toast.success(`✅ ${res.data.message}`);
-        fetchData();
+        fetchLogs(page);
+        fetchWallet();
       } else {
         toast.error(res.data.message || "❌ Transfer failed");
       }
@@ -425,15 +445,22 @@ export default function SystemEarningLogs() {
 
 
 
-      {/* Filters */}
+      {/* Filters (search backend-driven; sort client-side on current page) */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center border-b pb-4">
         <input
           type="text"
           placeholder="🔍 Search by source, status, context..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { setPage(1); fetchLogs(1); } }}
           className="border px-4 py-2 rounded-lg w-full md:w-1/3 dark:bg-gray-900 dark:border-gray-700 shadow-sm"
         />
+        <button
+          onClick={() => { setPage(1); fetchLogs(1); }}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+        >
+          Search
+        </button>
         <div className="flex items-center gap-2">
           <select
             value={sortField}
@@ -531,6 +558,16 @@ export default function SystemEarningLogs() {
           </Table>
         </div>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex justify-center">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p)}
+          />
+        </div>
+      )}
 
       {/* Weekly Confirmation Modal */}
       {confirmWeeklyOpen && (

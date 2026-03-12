@@ -1,11 +1,11 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import DefaultInputs from "@/components/admin/settings/form-elements/DefaultInputs";
+import DeliverySettings from "@/components/admin/settings/form-elements/DeliverySettings";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Settings",
-  description:
-    "This is Next.js Form Elements page for TailAdmin - Next.js Tailwind CSS Admin Dashboard Template",
+  description: "Admin settings page",
 };
 
 export default function FormElements() {
@@ -13,6 +13,9 @@ export default function FormElements() {
     <div>
       <PageBreadcrumb pageTitle="Settings" />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="space-y-6">
+          <DeliverySettings />
+        </div>
         <div className="space-y-6">
           <DefaultInputs />
         </div>

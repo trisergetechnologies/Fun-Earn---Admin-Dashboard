@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Image from "next/image";
 import Badge from "@/components/ui/badge/Badge";
@@ -14,6 +14,7 @@ import {
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getToken } from "@/helper/tokenHelper";
+import Pagination from "@/components/admin/tables/Pagination";
 
 interface ShortVideoUser {
   _id: string;
@@ -35,48 +36,45 @@ export default function ShortVideoUsersTable() {
 
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("watchtimeDesc");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
 
-  const [resetModalOpen, setResetModalOpen] = useState(false); // modal toggle
+  const [resetModalOpen, setResetModalOpen] = useState(false);
   const [payAllModalOpen, setPayAllModalOpen] = useState(false);
 
-  // const token = process.env.NEXT_PUBLIC_ADMIN_TOKEN;
-  let token: any
+  const token = getToken();
+  const baseUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/getuserswithwatchtime`;
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async (pageNum: number = 1) => {
+    if (!token) return;
     setLoading(true);
-    token = getToken();
     try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/getuserswithwatchtime`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setUsers(res.data.data || []);
+      const params: Record<string, string | number> = { page: pageNum, limit, sortBy };
+      if (search.trim()) params.search = search.trim();
+      const res = await axios.get(baseUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+        params,
+      });
+      setUsers(Array.isArray(res.data.data) ? res.data.data : []);
+      if (res.data.pagination) {
+        setTotalPages(res.data.pagination.totalPages || 1);
+      }
     } catch (err) {
       toast.error("❌ Failed to fetch users!");
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, search, sortBy]);
 
-  // Fetch users
   useEffect(() => {
-    fetchUsers();
-  }, [token]);
+    fetchUsers(page);
+  }, [fetchUsers, page]);
 
-  // Filter + sort
-  const filteredUsers = users
-    .filter((u) =>
-      `${u.name} ${u.email} ${u.phone}`
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    )
-    .sort((a, b) => {
-      if (sortBy === "watchtimeAsc")
-        return a.shortVideoProfile.watchTime - b.shortVideoProfile.watchTime;
-      if (sortBy === "watchtimeDesc")
-        return b.shortVideoProfile.watchTime - a.shortVideoProfile.watchTime;
-      return a.name.localeCompare(b.name);
-    });
+  const handleFilterApply = () => {
+    setPage(1);
+    fetchUsers(1);
+  };
 
   // Single Pay
   const handlePay = async (id: string, amount: number) => {
@@ -92,8 +90,7 @@ export default function ShortVideoUsersTable() {
       );
       if (res.data.success) {
         toast.success(`✅ ${res.data.message}`);
-        fetchUsers();
-
+        fetchUsers(page);
       } else {
         toast.error(res.data.message || "❌ Transfer failed");
       }
@@ -121,7 +118,7 @@ export default function ShortVideoUsersTable() {
 
       if (res.data.success) {
         toast.success(`✅ ${res.data.message}`);
-        fetchUsers();
+        fetchUsers(page);
       } else {
         toast.error(res.data.message || "❌ Transfer failed");
       }
@@ -142,8 +139,7 @@ export default function ShortVideoUsersTable() {
       );
       if (res.data.success) {
         toast.success(`✅ ${res.data.message}`);
-        fetchUsers();
-
+        fetchUsers(page);
       } else {
         toast.error(res.data.message || "❌ Transfer failed");
       }
@@ -184,18 +180,25 @@ export default function ShortVideoUsersTable() {
           </button>
         </div>
 
-        {/* Right filters */}
+        {/* Right filters (backend-driven) */}
         <div className="flex flex-wrap gap-3 items-center">
           <input
             type="text"
             placeholder="🔍 Search by name/email/phone"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleFilterApply()}
             className="border px-3 py-2 rounded-md text-sm w-64 dark:bg-gray-900 dark:border-gray-700"
           />
+          <button
+            onClick={handleFilterApply}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700"
+          >
+            Apply
+          </button>
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
             className="border px-3 py-2 rounded-md text-sm dark:bg-gray-900 dark:border-gray-700"
           >
             <option value="watchtimeDesc">Watch Time ↓</option>
@@ -225,14 +228,14 @@ export default function ShortVideoUsersTable() {
                   Loading users...
                 </TableCell>
               </TableRow>
-            ) : filteredUsers.length === 0 ? (
+            ) : users.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-6">
                   No users found.
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((user, index) => (
+              users.map((user, index) => (
                 <TableRow
                   key={user._id}
                   className={`transition ${index % 2 === 0
@@ -305,6 +308,16 @@ export default function ShortVideoUsersTable() {
           </TableBody>
         </Table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex justify-center p-4 border-t border-gray-100 dark:border-gray-700">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p)}
+          />
+        </div>
+      )}
 
       {/* Reset Confirmation Modal */}
       {resetModalOpen && (

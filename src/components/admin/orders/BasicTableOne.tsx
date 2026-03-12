@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Image from "next/image";
 import Badge from "@/components/ui/badge/Badge";
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import ChangeStatusModal from "./ChangeStatusModal";
 import OrderDetailsModal from "./OrderDetailsModal";
+import Pagination from "./Pagination";
 import { getToken } from "@/helper/tokenHelper";
 
 interface OrderItem {
@@ -52,34 +53,44 @@ export default function BasicTableOne() {
   const [statusOrder, setStatusOrder] = useState<Order | null>(null);
   const [openStatus, setOpenStatus] = useState(false);
 
-  // Filters
+  // Filters (backend-driven)
   const [searchId, setSearchId] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
 
-  let token: any
+  const token = getToken();
+  const baseUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/order/getorders`;
 
+  const fetchOrders = useCallback(async (pageNum: number = 1) => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const params: Record<string, string | number> = { page: pageNum, limit, sortBy };
+      if (searchId.trim()) params.search = searchId.trim();
+      if (statusFilter) params.status = statusFilter;
+      if (paymentFilter) params.paymentStatus = paymentFilter;
+      const res = await axios.get(baseUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+        params
+      });
+      setOrders(Array.isArray(res.data.data) ? res.data.data : []);
+      if (res.data.pagination) {
+        setTotalPages(res.data.pagination.totalPages || 1);
+      }
+    } catch (err) {
+      console.error("Error fetching orders:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, searchId, statusFilter, paymentFilter, sortBy]);
 
   useEffect(() => {
-    token = getToken();
-    
-    const fetchOrders = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/order/getorders`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setOrders(res.data.data || []);
-      } catch (err) {
-        console.error("Error fetching orders:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchOrders();
-  }, [token]);
+    fetchOrders(page);
+  }, [fetchOrders, page]);
 
   const openOrderDetails = (order: Order) => {
     setSelectedOrder(order);
@@ -91,40 +102,27 @@ export default function BasicTableOne() {
     setOpenStatus(true);
   };
 
-  // ---- Filtering & Sorting ----
-  const filteredOrders = orders
-    .filter((o) =>
-      searchId ? o._id.toLowerCase().includes(searchId.toLowerCase()) : true
-    )
-    .filter((o) => (statusFilter ? o.status === statusFilter : true))
-    .filter((o) => (paymentFilter ? o.paymentStatus === paymentFilter : true))
-    .sort((a, b) => {
-      if (sortBy === "newest")
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      if (sortBy === "oldest")
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      if (sortBy === "amountHigh")
-        return b.finalAmountPaid - a.finalAmountPaid;
-      if (sortBy === "amountLow")
-        return a.finalAmountPaid - b.finalAmountPaid;
-      return 0;
-    });
+  const handleFilterApply = () => {
+    setPage(1);
+    fetchOrders(1);
+  };
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-gray-900">
-      {/* Filters Toolbar */}
+      {/* Filters Toolbar (backend-driven) */}
       <div className="p-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between border-b border-gray-100 dark:border-white/[0.05]">
         <div className="flex flex-wrap gap-3">
           <input
             type="text"
             value={searchId}
             onChange={(e) => setSearchId(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleFilterApply()}
             placeholder="Search by Order ID..."
             className="border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700"
           />
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
             className="border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700"
           >
             <option value="">All Statuses</option>
@@ -137,18 +135,24 @@ export default function BasicTableOne() {
           </select>
           <select
             value={paymentFilter}
-            onChange={(e) => setPaymentFilter(e.target.value)}
+            onChange={(e) => { setPaymentFilter(e.target.value); setPage(1); }}
             className="border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700"
           >
             <option value="">All Payments</option>
             <option value="paid">Paid</option>
             <option value="failed">Failed</option>
           </select>
+          <button
+            onClick={handleFilterApply}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700"
+          >
+            Apply
+          </button>
         </div>
 
         <select
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
+          onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
           className="border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700"
         >
           <option value="newest">Newest First</option>
@@ -182,14 +186,14 @@ export default function BasicTableOne() {
                   Loading orders...
                 </TableCell>
               </TableRow>
-            ) : filteredOrders.length === 0 ? (
+            ) : orders.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-6">
                   No orders found.
                 </TableCell>
               </TableRow>
             ) : (
-              filteredOrders?.map((order) => (
+              orders.map((order) => (
                 <TableRow
                   key={order._id}
                   className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition"
@@ -312,6 +316,16 @@ export default function BasicTableOne() {
             );
           }}
         />
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex justify-center p-4 border-t border-gray-100 dark:border-white/[0.05]">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p)}
+          />
+        </div>
       )}
     </div>
   );

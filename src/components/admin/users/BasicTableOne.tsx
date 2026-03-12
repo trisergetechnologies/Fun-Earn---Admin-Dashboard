@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Badge from "@/components/ui/badge/Badge";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,6 +8,7 @@ import Image from "next/image";
 import DetailsModal from "./DetailsModal";
 import TeamTreeModal from "./TeamTreeModal";
 import NetworkModal from "./NetworkModal";
+import Pagination from "./Pagination";
 import { getToken } from "@/helper/tokenHelper";
 
 // ------------------ Interfaces ------------------
@@ -94,32 +95,52 @@ export default function BasicTableOne() {
   const [openNetwork, setOpenNetwork] = useState(false);
   const [networkData, setNetworkData] = useState<any>(null);
 
-  // filters + sorting
+  // filters + sorting (backend-driven)
   const [search, setSearch] = useState("");
-  const [sortField, setSortField] = useState<keyof User | "">("");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [sortField, setSortField] = useState<string>("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const limit = 10;
 
-  let token: any
+  const token = getToken();
+  const baseUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/user/getusers`;
 
-  const url = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/user/getusers`;
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async (pageNum: number = 1) => {
+    if (!token) return;
+    setLoading(true);
     try {
-      const res = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const params: Record<string, string | number> = { page: pageNum, limit, sortField, sortOrder };
+      if (search.trim()) params.search = search.trim();
+      const res = await axios.get(baseUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+        params
       });
-      setUsers(res.data.data); // ✅ your response shape
+      setUsers(Array.isArray(res.data.data) ? res.data.data : []);
+      if (res.data.pagination) {
+        setTotalPages(res.data.pagination.totalPages || 1);
+      }
     } catch (err) {
       console.error("Error fetching users", err);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [token, search, sortField, sortOrder]);
 
-  // Fetch API
   useEffect(() => {
-    token = getToken();
-    fetchUsers();
-  }, []);
+    fetchUsers(page);
+  }, [fetchUsers, page]);
+
+  const handleSearchApply = () => {
+    setPage(1);
+    fetchUsers(1);
+  };
+  const handleSortChange = (field: string, order: "asc" | "desc") => {
+    setSortField(field);
+    setSortOrder(order);
+    setPage(1);
+  };
 
   const handleOpen = (user: User) => {
     setSelectedUser(user);
@@ -165,49 +186,32 @@ export default function BasicTableOne() {
     }
   };
 
-  // --- filtering + sorting logic ---
-  const filteredUsers = users.filter((user) => {
-    const term = search.toLowerCase();
-    return (
-      user.name?.toLowerCase().includes(term) ||
-      user.email?.toLowerCase().includes(term) ||
-      user.phone?.toLowerCase().includes(term) ||
-      user.referralCode?.toLowerCase().includes(term) ||
-      user.package?.name?.toLowerCase().includes(term)
-    );
-  });
-
-  const sortedUsers = [...filteredUsers].sort((a, b) => {
-    if (!sortField) return 0;
-    const valA = (a[sortField] as string | number | undefined) ?? "";
-    const valB = (b[sortField] as string | number | undefined) ?? "";
-    if (typeof valA === "number" && typeof valB === "number") {
-      return sortOrder === "asc" ? valA - valB : valB - valA;
-    }
-    return sortOrder === "asc"
-      ? String(valA).localeCompare(String(valB))
-      : String(valB).localeCompare(String(valA));
-  });
-
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03] p-4">
       
-      {/* Filters + Sorting */}
+      {/* Filters + Sorting (backend-driven) */}
       <div className="flex flex-col md:flex-row gap-4 mb-4">
         <input
           type="text"
-          placeholder="Search by name, email, phone, referral, package..."
+          placeholder="Search by name, email, phone, referral..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border px-3 py-2 rounded-md w-full md:w-1/3"
+          onKeyDown={(e) => e.key === "Enter" && handleSearchApply()}
+          className="border px-3 py-2 rounded-md w-full md:w-1/3 dark:bg-gray-800 dark:border-gray-700"
         />
+        <button
+          onClick={handleSearchApply}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+        >
+          Search
+        </button>
         <div className="flex items-center gap-2">
           <select
             value={sortField}
-            onChange={(e) => setSortField(e.target.value as keyof User)}
-            className="border px-3 py-2 rounded-md"
+            onChange={(e) => handleSortChange(e.target.value, sortOrder)}
+            className="border px-3 py-2 rounded-md dark:bg-gray-800 dark:border-gray-700"
           >
-            <option value="">Sort By</option>
+            <option value="createdAt">Date</option>
             <option value="name">Name</option>
             <option value="email">Email</option>
             <option value="phone">Phone</option>
@@ -215,8 +219,8 @@ export default function BasicTableOne() {
             <option value="serialNumber">Serial Number</option>
           </select>
           <button
-            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            className="px-3 py-2 rounded-md border bg-gray-100"
+            onClick={() => handleSortChange(sortField, sortOrder === "asc" ? "desc" : "asc")}
+            className="px-3 py-2 rounded-md border bg-gray-100 dark:bg-gray-800"
           >
             {sortOrder === "asc" ? "↑ Asc" : "↓ Desc"}
           </button>
@@ -244,7 +248,12 @@ export default function BasicTableOne() {
 
             {/* Body */}
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {sortedUsers.map((user) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center py-8">Loading...</TableCell>
+                </TableRow>
+              ) : (
+              users.map((user) => (
                 <TableRow key={user._id}>
                   {/* User */}
                   <TableCell className="px-5 py-4">
@@ -343,11 +352,21 @@ export default function BasicTableOne() {
                     </button>
                   </TableCell>
                 </TableRow>
-              ))}
+              )))}
             </TableBody>
           </Table>
         </div>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex justify-center">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p)}
+          />
+        </div>
+      )}
 
       {/* Details Modal */}
       {selectedUser && (
@@ -355,7 +374,7 @@ export default function BasicTableOne() {
           onDelete={handleDelete}
           open={open}
           onClose={handleClose}
-          refreshUser={()=> fetchUsers()}
+          refreshUser={() => fetchUsers(page)}
           user={selectedUser}
         />
       )}

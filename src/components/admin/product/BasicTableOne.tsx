@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import axios from "axios";
 import Badge from "@/components/ui/badge/Badge";
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 
 import { ProductDetail, ProductAdd, ProductUpdate } from "./ProductModals";
+import Pagination from "./Pagination";
 import { getToken } from "@/helper/tokenHelper";
 
 export interface Category {
@@ -47,8 +48,6 @@ export interface Product {
 
 const API_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/product/getproducts`;
 
-  let TOKEN: any
-
 export default function ProductTable() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,69 +57,72 @@ export default function ProductTable() {
   const [openUpdate, setOpenUpdate] = useState<Product | null>(null);
   const [openDetail, setOpenDetail] = useState<Product | null>(null);
 
-  // fetch products
-  useEffect(() => {
-    TOKEN = getToken();
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const res = await axios.get(API_URL, {
-          headers: { Authorization: `Bearer ${TOKEN}` },
-        });
-
-        console.log("Full API response:", res.data);
-
-        // ✅ extract products safely
-        const list = res.data?.data?.products || [];
-        console.log("Fetched list:", list);
-
-        setProducts(list);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
-
-
-
-  // filters (simplified: only search)
   const [search, setSearch] = useState("");
-  const filteredProducts = useMemo(() => {
-    return products.filter(
-      (p) =>
-        p.title?.toLowerCase().includes(search.toLowerCase()) ||
-        p.sellerId?.name?.toLowerCase().includes(search.toLowerCase()) ||
-        p.categoryId?.title?.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [products, search]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 25;
+  const token = getToken();
 
-  // CRUD handlers
-  const handleAdd = (p: Product) => setProducts((prev) => [...prev, p]);
+  const fetchProducts = useCallback(async (pageNum: number = 1) => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const params: Record<string, string | number> = { page: pageNum, limit };
+      if (search.trim()) params.search = search.trim();
+      const res = await axios.get(API_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+        params,
+      });
+      const list = res.data?.data?.products ?? [];
+      setProducts(list);
+      setTotalPages(res.data?.data?.totalPages ?? 1);
+    } catch (err: any) {
+      setError(err?.message ?? "Failed to fetch");
+    } finally {
+      setLoading(false);
+    }
+  }, [token, search]);
+
+  useEffect(() => {
+    fetchProducts(page);
+  }, [fetchProducts, page]);
+
+  const handleAdd = (p: Product) => {
+    setProducts((prev) => [...prev, p]);
+    setTotalPages((t) => Math.max(1, t));
+  };
   const handleUpdate = (p: Product) =>
     setProducts((prev) => prev.map((x) => (x._id === p._id ? p : x)));
   const handleDelete = (id: string) =>
     setProducts((prev) => prev.filter((x) => x._id !== id));
 
-  if (loading) return <p>Loading…</p>;
+  const handleSearchApply = () => {
+    setPage(1);
+    fetchProducts(1);
+  };
+
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
     <div className="rounded-xl border p-4 bg-white dark:bg-gray-900">
-      {/* Filters */}
-      <div className="flex mb-4 gap-3">
+      {/* Filters (backend-driven) */}
+      <div className="flex flex-wrap mb-4 gap-3">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search..."
-          className="border rounded px-3 py-2 text-sm flex-1"
+          onKeyDown={(e) => e.key === "Enter" && handleSearchApply()}
+          placeholder="Search by title or description..."
+          className="border rounded px-3 py-2 text-sm flex-1 min-w-[200px] dark:bg-gray-800 dark:border-gray-700"
         />
         <button
+          onClick={handleSearchApply}
+          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+        >
+          Search
+        </button>
+        <button
           onClick={() => setOpenAdd(true)}
-          className="px-4 py-2 bg-indigo-600 text-white rounded"
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
         >
           + Add
         </button>
@@ -142,7 +144,12 @@ export default function ProductTable() {
           </TableHeader>
 
           <TableBody>
-            {filteredProducts?.map((p) => (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8">Loading…</TableCell>
+              </TableRow>
+            ) : (
+            products?.map((p) => (
               <TableRow
                 key={p._id}
                 className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"
@@ -195,11 +202,20 @@ export default function ProductTable() {
                   </button>
                 </TableCell>
               </TableRow>
-            ))}
+            )))}
           </TableBody>
         </Table>
       </div>
 
+      {totalPages > 1 && (
+        <div className="mt-4 flex justify-center">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p)}
+          />
+        </div>
+      )}
 
       {/* Modals */}
       {openAdd && (

@@ -87,6 +87,20 @@ export function ProductDetail({
           <p><span className="font-medium">Updated:</span> {new Date(product.updatedAt).toLocaleString()}</p>
         </div>
 
+        {/* Variations */}
+        {(product as any).variations?.length > 0 && (
+          <div className="mt-4">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Variations:</p>
+            <div className="flex flex-wrap gap-2">
+              {(product as any).variations.map((v: any, i: number) => (
+                <span key={i} className="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-md text-xs">
+                  <span className="font-medium">{v.name}:</span> {(v.options || []).join(', ')}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="mt-8 flex justify-end gap-3">
           <button
@@ -175,12 +189,13 @@ function ProductForm({
         </label>
       </div>
 
-      {/* Price / Discount / Stock */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* Price / Discount / Stock / GST */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "Price", key: "price", type: "number" },
           { label: "Discount %", key: "discountPercent", type: "number" },
           { label: "Stock", key: "stock", type: "number" },
+          { label: "GST %", key: "gst", type: "number" },
         ].map((f) => (
           <div key={f.key} className="relative">
             <input
@@ -257,7 +272,61 @@ function ProductForm({
         </span>
       </div>
 
-      {/* File Upload (Add only) */}
+      {/* Variations */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-sm font-medium">Variations</label>
+          <button
+            type="button"
+            onClick={() => {
+              const variations = form.variations || [];
+              setForm({ ...form, variations: [...variations, { name: "", options: "" }] });
+            }}
+            className="text-xs px-3 py-1 rounded-md bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900 dark:text-indigo-300"
+          >
+            + Add Variation
+          </button>
+        </div>
+        {(form.variations || []).map((v: any, idx: number) => (
+          <div key={idx} className="flex gap-2 mb-2 items-center">
+            <input
+              placeholder="Name (e.g. Size)"
+              value={v.name}
+              onChange={(e) => {
+                const updated = [...form.variations];
+                updated[idx] = { ...updated[idx], name: e.target.value };
+                setForm({ ...form, variations: updated });
+              }}
+              className="flex-1 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-transparent focus:border-indigo-500 outline-none"
+            />
+            <input
+              placeholder="Options (comma separated: S, M, L, XL)"
+              value={typeof v.options === 'string' ? v.options : (v.options || []).join(', ')}
+              onChange={(e) => {
+                const updated = [...form.variations];
+                updated[idx] = { ...updated[idx], options: e.target.value };
+                setForm({ ...form, variations: updated });
+              }}
+              className="flex-[2] border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-transparent focus:border-indigo-500 outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const updated = form.variations.filter((_: any, i: number) => i !== idx);
+                setForm({ ...form, variations: updated });
+              }}
+              className="text-red-500 hover:text-red-700 text-lg px-1"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+        {(!form.variations || form.variations.length === 0) && (
+          <p className="text-xs text-gray-400">No variations added. Product will have no selectable options.</p>
+        )}
+      </div>
+
+      {/* File Upload */}
       {setFile && (
         <div>
           <label className="text-sm font-medium mb-2 block">Product Image</label>
@@ -305,15 +374,17 @@ export function ProductAdd({
   onClose: () => void;
   onSave: (p: Product) => void;
 }) {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<any>({
     title: "",
     description: "",
     price: 0,
     discountPercent: 0,
     stock: 0,
+    gst: 5,
     categoryId: "",
     sellerId: "",
     isActive: true,
+    variations: [],
   });
   const [file, setFile] = useState<File | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -341,7 +412,21 @@ export function ProductAdd({
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     const fd = new FormData();
-    Object.entries(form).forEach(([k, v]) => fd.append(k, String(v)));
+    Object.entries(form).forEach(([k, v]) => {
+      if (k === 'gst') {
+        fd.append(k, String(Number(v) / 100));
+      } else if (k === 'variations') {
+        const parsed = (v as any[]).map((item: any) => ({
+          name: item.name,
+          options: typeof item.options === 'string'
+            ? item.options.split(',').map((o: string) => o.trim()).filter(Boolean)
+            : item.options || []
+        })).filter((item: any) => item.name && item.options.length > 0);
+        fd.append(k, JSON.stringify(parsed));
+      } else {
+        fd.append(k, String(v));
+      }
+    });
     if (file) fd.append("image", file);
 
     const res = await axios.post<Product>(`${API_URL}/addproduct`, fd, {
@@ -380,16 +465,22 @@ export function ProductUpdate({
   onClose: () => void;
   onSave: (p: Product) => void;
 }) {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<any>({
     title: product.title,
     description: product.description,
     price: product.price,
     discountPercent: product.discountPercent,
     stock: product.stock,
+    gst: Math.round(product.gst * 100),
     categoryId: product.categoryId?._id || "",
     sellerId: product.sellerId?._id || "",
     isActive: product.isActive,
+    variations: ((product as any).variations || []).map((v: any) => ({
+      name: v.name || "",
+      options: (v.options || []).join(", ")
+    })),
   });
+  const [file, setFile] = useState<File | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sellers, setSellers] = useState<Seller[]>([]);
 
@@ -414,7 +505,25 @@ export function ProductUpdate({
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    const res = await axios.put(`${API_URL}/updateproduct/${product._id}`, form, {
+    const fd = new FormData();
+    Object.entries(form).forEach(([k, v]) => {
+      if (k === 'gst') {
+        fd.append(k, String(Number(v) / 100));
+      } else if (k === 'variations') {
+        const parsed = (v as any[]).map((item: any) => ({
+          name: item.name,
+          options: typeof item.options === 'string'
+            ? item.options.split(',').map((o: string) => o.trim()).filter(Boolean)
+            : item.options || []
+        })).filter((item: any) => item.name && item.options.length > 0);
+        fd.append(k, JSON.stringify(parsed));
+      } else {
+        fd.append(k, String(v));
+      }
+    });
+    if (file) fd.append("image", file);
+
+    const res = await axios.put(`${API_URL}/updateproduct/${product._id}`, fd, {
       headers: { Authorization: `Bearer ${TOKEN}` },
     });
     onSave(res.data);
@@ -428,6 +537,8 @@ export function ProductUpdate({
         setForm={setForm}
         categories={categories}
         sellers={sellers}
+        file={file}
+        setFile={setFile}
         onSubmit={handleSubmit}
         onCancel={onClose}
         submitLabel="Update"

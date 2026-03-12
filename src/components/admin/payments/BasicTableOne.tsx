@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -9,35 +9,47 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import Badge from "@/components/ui/badge/Badge";
 import { Calendar, User, Mail, Phone, Wallet, Loader2 } from "lucide-react";
 import WithdrawalRequestModal from "./WithdrawalRequestModal";
+import Pagination from "@/components/admin/tables/Pagination";
 
 // ------------------------------ COMPONENT ------------------------------
 export default function WithdrawalRequestsAdmin() {
   const [activeTab, setActiveTab] = useState<"pending" | "approved" | "rejected">("pending");
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
 
-  // Sub filters
   const [search, setSearch] = useState("");
   const [minAmount, setMinAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState("");
-  const [dateRange, setDateRange] = useState({ from: "", to: "" });
-
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const limit = 10;
   const token = getToken();
+  const baseUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/wallet/getwithdrawalrequests`;
 
-  // Fetch data based on current tab
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async (pageNum: number = 1) => {
+    if (!token) return;
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/wallet/getwithdrawalrequests?status=${activeTab}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
+      const params: Record<string, string | number> = { status: activeTab, page: pageNum, limit };
+      if (search.trim()) params.search = search.trim();
+      if (minAmount !== "") params.minAmount = minAmount;
+      if (maxAmount !== "") params.maxAmount = maxAmount;
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+      const res = await axios.get(baseUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+        params,
+      });
       if (res.data.success) {
-        setRequests(res.data.data || []);
+        setRequests(Array.isArray(res.data.data) ? res.data.data : []);
+        if (res.data.pagination) {
+          setTotalPages(res.data.pagination.totalPages || 1);
+        }
       } else {
         toast.error(res.data.message || "Failed to fetch requests");
       }
@@ -47,26 +59,11 @@ export default function WithdrawalRequestsAdmin() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, activeTab, search, minAmount, maxAmount, dateFrom, dateTo]);
 
   useEffect(() => {
-    fetchRequests();
-  }, [activeTab]);
-
-  // Filter logic
-  const filteredRequests = requests.filter((r) => {
-    const matchSearch =
-      r.user.name.toLowerCase().includes(search.toLowerCase()) ||
-      r.user.email.toLowerCase().includes(search.toLowerCase()) ||
-      r.user.phone.includes(search);
-    const matchMin = minAmount ? r.amountRequested >= Number(minAmount) : true;
-    const matchMax = maxAmount ? r.amountRequested <= Number(maxAmount) : true;
-    const matchDate =
-      (!dateRange.from || new Date(r.createdAt) >= new Date(dateRange.from)) &&
-      (!dateRange.to || new Date(r.createdAt) <= new Date(dateRange.to));
-
-    return matchSearch && matchMin && matchMax && matchDate;
-  });
+    fetchRequests(page);
+  }, [activeTab, page]);
 
   // Badge colors
   const statusColor = {
@@ -82,7 +79,7 @@ export default function WithdrawalRequestsAdmin() {
         {["pending", "approved", "rejected"].map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab as any)}
+            onClick={() => { setActiveTab(tab as any); setPage(1); }}
             className={`px-5 py-2 rounded-t-lg font-semibold transition ${
               activeTab === tab
                 ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow"
@@ -96,7 +93,7 @@ export default function WithdrawalRequestsAdmin() {
         ))}
       </div>
 
-      {/* 🔍 Filters */}
+      {/* 🔍 Filters (backend-driven) */}
       <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <input
           type="text"
@@ -119,23 +116,23 @@ export default function WithdrawalRequestsAdmin() {
           onChange={(e) => setMaxAmount(e.target.value)}
           className="border px-3 py-2 rounded-lg w-24 dark:bg-gray-800 dark:border-gray-700"
         />
-        {/* <input
+        <input
           type="date"
-          value={dateRange.from}
-          onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
           className="border px-3 py-2 rounded-lg dark:bg-gray-800 dark:border-gray-700"
         />
         <input
           type="date"
-          value={dateRange.to}
-          onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
           className="border px-3 py-2 rounded-lg dark:bg-gray-800 dark:border-gray-700"
-        /> */}
+        />
         <button
-          onClick={fetchRequests}
+          onClick={() => { setPage(1); fetchRequests(1); }}
           className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition"
         >
-          Refresh
+          Apply
         </button>
       </div>
 
@@ -180,14 +177,14 @@ export default function WithdrawalRequestsAdmin() {
                     Loading requests...
                   </TableCell>
                 </TableRow>
-              ) : filteredRequests.length === 0 ? (
+              ) : requests.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                     No {activeTab} requests found.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredRequests.map((req, i) => (
+                requests.map((req, i) => (
                   <TableRow
                     key={req.requestId}
                     className={`transition ${
@@ -272,6 +269,16 @@ export default function WithdrawalRequestsAdmin() {
           </Table>
         </div>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex justify-center">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p)}
+          />
+        </div>
+      )}
       {modalOpen && (
         <WithdrawalRequestModal
           isOpen={modalOpen}
