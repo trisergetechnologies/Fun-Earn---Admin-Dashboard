@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Badge from "@/components/ui/badge/Badge";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import Image from "next/image";
+import { User } from "lucide-react";
 import DetailsModal from "./DetailsModal";
 import TeamTreeModal from "./TeamTreeModal";
 import NetworkModal from "./NetworkModal";
@@ -142,6 +142,13 @@ export default function BasicTableOne() {
     setPage(1);
   };
 
+  const getGenderIconStyle = (gender: string) => {
+    const g = (gender || "").toLowerCase();
+    if (g === "female") return "bg-pink-100 text-pink-600 dark:bg-pink-900/40 dark:text-pink-400";
+    if (g === "male") return "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400";
+    return "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400";
+  };
+
   const handleOpen = (user: User) => {
     setSelectedUser(user);
     setOpen(true);
@@ -258,13 +265,8 @@ export default function BasicTableOne() {
                   {/* User */}
                   <TableCell className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 overflow-hidden rounded-full">
-                        <Image
-                          width={40}
-                          height={40}
-                          src={user.image || "https://avatar.iran.liara.run/public"}
-                          alt={user.name}
-                        />
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${getGenderIconStyle(user.gender)}`}>
+                        <User className="w-5 h-5" />
                       </div>
                       <div>
                         <span className="block font-medium text-gray-800 dark:text-white/90">

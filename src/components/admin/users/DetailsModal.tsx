@@ -1,8 +1,7 @@
 // components/DetailsModal.tsx
 "use client";
 
-import Image from "next/image";
-import { X, Trash2, ShoppingBag, Video, Wallet } from "lucide-react";
+import { X, Trash2, ShoppingBag, Video, Wallet, User } from "lucide-react";
 import Badge from "@/components/ui/badge/Badge";
 import { useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
@@ -92,7 +91,8 @@ export default function DetailsModal({
 
   const router = useRouter();
 
-  const [rechargeAmount, setRechargeAmount] = useState("");
+  const [walletAmount, setWalletAmount] = useState("");
+  const [walletLoading, setWalletLoading] = useState(false);
   const [activating, setActivating] = useState(false);
 
   const [showEcartModal, setShowEcartModal] = useState(false);
@@ -101,36 +101,61 @@ export default function DetailsModal({
   const [stateAddress, setStateAddress] = useState("");
 
   const handleRecharge = async () => {
-    if (!rechargeAmount || Number(rechargeAmount) <= 0) {
-      toast.error("Enter a valid recharge amount");
+    const amt = Number(walletAmount);
+    if (!walletAmount || amt <= 0) {
+      toast.error("Enter a valid amount");
       return;
     }
-
     try {
-      const url = `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/rechargeshortvideowallet`
-      const token = getToken();
-
+      setWalletLoading(true);
       const { data } = await axios.put(
-        url,
-        { userId: user._id, amount: Number(rechargeAmount) },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/rechargeshortvideowallet`,
+        { userId: user._id, amount: amt },
+        { headers: { Authorization: `Bearer ${getToken()}` } }
       );
-
       if (data.success) {
-        toast.success(`Recharged ₹${rechargeAmount} successfully 🎉`);
-        setRechargeAmount("");
+        toast.success(`Recharged ₹${amt} successfully`);
+        setWalletAmount("");
+        refreshUser();
       } else {
         toast.warn(data.message || "Recharge failed");
       }
     } catch (err) {
-      console.error("Recharge error:", err);
-      toast.error(
-        err.response?.data?.message || "Something went wrong, please try again"
+      toast.error(err.response?.data?.message || "Something went wrong");
+    } finally {
+      setWalletLoading(false);
+    }
+  };
+
+  const handleDeduct = async () => {
+    const amt = Number(walletAmount);
+    if (!walletAmount || amt <= 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
+    const balance = user.wallets?.shortVideoWallet || 0;
+    if (amt > balance) {
+      toast.error(`Insufficient balance. Available: ₹${balance.toFixed(2)}`);
+      return;
+    }
+    try {
+      setWalletLoading(true);
+      const { data } = await axios.put(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/deductshortvideowallet`,
+        { userId: user._id, amount: amt },
+        { headers: { Authorization: `Bearer ${getToken()}` } }
       );
+      if (data.success) {
+        toast.success(`Deducted ₹${amt} from Fun & Enjoy wallet`);
+        setWalletAmount("");
+        refreshUser();
+      } else {
+        toast.warn(data.message || "Deduction failed");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Something went wrong");
+    } finally {
+      setWalletLoading(false);
     }
   };
 
@@ -166,6 +191,13 @@ export default function DetailsModal({
     }
   };
 
+  const getGenderIconStyle = (gender: string) => {
+    const g = (gender || "").toLowerCase();
+    if (g === "female") return "bg-pink-100 text-pink-600 dark:bg-pink-900/40 dark:text-pink-400 ring-pink-300";
+    if (g === "male") return "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 ring-blue-300";
+    return "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 ring-gray-300";
+  };
+
   const handleActivateShortVideo = async (referralCode: string) => {
     if (!referralCode) return;
 
@@ -199,46 +231,40 @@ export default function DetailsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-5xl rounded-2xl bg-white dark:bg-gray-900 shadow-2xl p-6 relative overflow-y-auto max-h-[95vh] animate-fadeIn">
-        
-        {/* Close */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-        >
-          <X className="w-6 h-6" />
-        </button>
-
-        {/* Header */}
-        <div className="flex items-center gap-5 border-b border-gray-200 dark:border-gray-700 pb-5">
-          <div className="w-20 h-20 overflow-hidden rounded-full ring-4 ring-blue-500">
-            <Image
-              src={user.image || "https://avatar.iran.liara.run/public"}
-              alt={user.name}
-              width={80}
-              height={80}
-              className="object-cover"
-            />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{user.name}</h2>
-            <div className="flex items-center gap-3 mt-1">
-              <span className="text-sm text-gray-500 dark:text-gray-400 capitalize">
-                {user.gender}
-              </span>
-              <Badge size="sm" color={user.isActive ? "success" : "error"}>
-                {user.isActive ? "Active" : "Inactive"}
-              </Badge>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-5xl max-h-[95vh] rounded-2xl bg-white dark:bg-gray-900 shadow-2xl relative flex flex-col animate-fadeIn">
+        {/* Header - fixed */}
+        <div className="shrink-0 flex items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-700 p-6 pb-5">
+          <div className="flex items-center gap-5 min-w-0">
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 ring-4 ring-offset-2 dark:ring-offset-gray-900 ${getGenderIconStyle(user.gender || "other")}`}>
+              <User className="w-10 h-10" />
             </div>
-            <p className="text-xs text-gray-400 mt-1">
-              Joined: {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "—"}
-            </p>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{user.name}</h2>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-sm text-gray-500 dark:text-gray-400 capitalize">
+                  {user.gender}
+                </span>
+                <Badge size="sm" color={user.isActive ? "success" : "error"}>
+                  {user.isActive ? "Active" : "Inactive"}
+                </Badge>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">
+                Joined: {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "—"}
+              </p>
+            </div>
           </div>
+          <button
+            onClick={onClose}
+            className="shrink-0 p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-800"
+            aria-label="Close"
+          >
+            <X className="w-6 h-6" />
+          </button>
         </div>
 
-        {/* Body */}
-        <div className="mt-6 space-y-8 text-sm text-gray-700 dark:text-gray-300">
+        {/* Body - scrollable */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 mt-2 space-y-8 text-sm text-gray-700 dark:text-gray-300">
           
           {/* Contact Info */}
           <section>
@@ -371,24 +397,38 @@ export default function DetailsModal({
                   <Wallet className="w-6 h-6 mb-2" />
                   <p className="font-medium">Fun & Enjoy</p>
                   <p className="text-2xl font-bold">
-                    ₹{user.wallets.shortVideoWallet?.toFixed(2) || 0}
+                    ₹{(user.wallets.shortVideoWallet ?? 0).toFixed(2)}
                   </p>
 
-                  {/* Recharge Input */}
-                  <div className="mt-4 bg-white/10 rounded-lg p-2 flex gap-2 items-center">
-                    <input
-                      type="number"
-                      placeholder="Enter amount"
-                      className="flex-1 px-2 py-1 text-sm rounded bg-white/20 text-white placeholder-white/70 focus:outline-none"
-                      value={rechargeAmount}
-                      onChange={(e) => setRechargeAmount(e.target.value)}
-                    />
-                    <button
-                      onClick={handleRecharge}
-                      className="px-3 py-1.5 text-sm font-semibold rounded bg-yellow-400 text-gray-900 hover:bg-yellow-500"
-                    >
-                      Recharge
-                    </button>
+                  {/* Recharge / Deduct - Fun & Enjoy only */}
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs text-white/80">Admin: Recharge or deduct</p>
+                    <div className="flex flex-wrap gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Amount"
+                        className="flex-1 min-w-0 px-3 py-2 text-sm rounded-lg bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        value={walletAmount}
+                        onChange={(e) => setWalletAmount(e.target.value)}
+                        disabled={walletLoading}
+                      />
+                      <button
+                        onClick={handleRecharge}
+                        disabled={walletLoading}
+                        className="px-3 py-2 text-sm font-semibold rounded-lg bg-emerald-400 text-gray-900 hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {walletLoading ? "…" : "Recharge"}
+                      </button>
+                      <button
+                        onClick={handleDeduct}
+                        disabled={walletLoading}
+                        className="px-3 py-2 text-sm font-semibold rounded-lg bg-amber-400 text-gray-900 hover:bg-amber-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {walletLoading ? "…" : "Deduct"}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -411,8 +451,8 @@ export default function DetailsModal({
 
         </div>
 
-        {/* Footer */}
-        <div className="mt-10 flex justify-between items-center">
+        {/* Footer - fixed */}
+        <div className="shrink-0 mt-4 flex justify-between items-center border-t border-gray-200 dark:border-gray-700 p-6">
           <button
             disabled={true}
             // onClick={onDelete}

@@ -5,7 +5,8 @@ import { useSidebar } from "@/context/SidebarContext";
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
-import React, { useEffect } from "react";
+import WelcomeSplash, { WELCOME_SPLASH_STORAGE_KEY } from "@/components/admin/WelcomeSplash";
+import React, { useEffect, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdminLayout({
@@ -14,8 +15,16 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
-  const { isAuthLoading, isAuthenticated } = useAuth();
+  const { isAuthLoading, isAuthenticated, user } = useAuth();
   const router = useRouter();
+  const [splashGate, setSplashGate] = useState<"pending" | "show" | "done">("pending");
+  const onSplashDismiss = useCallback(() => setSplashGate("done"), []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const alreadyShown = sessionStorage.getItem(WELCOME_SPLASH_STORAGE_KEY);
+    setSplashGate(alreadyShown ? "done" : "show");
+  }, []);
 
   // Handle redirect if not authenticated
   useEffect(() => {
@@ -45,20 +54,27 @@ export default function AdminLayout({
     return null;
   }
 
+  const splashBgLight = "linear-gradient(165deg, #faf9f7 0%, #f5f3f0 35%, #f0eeea 70%, #ebe8e4 100%)";
+  const splashBgDark = "linear-gradient(165deg, #1a1918 0%, #1f1e1c 35%, #252422 70%, #2a2927 100%)";
+
+  if (splashGate === "pending" || splashGate === "show") {
+    return (
+      <>
+        <div className="fixed inset-0 z-[99998] dark:hidden" style={{ background: splashBgLight }} aria-hidden />
+        <div className="fixed inset-0 z-[99998] hidden dark:block" style={{ background: splashBgDark }} aria-hidden />
+        {splashGate === "show" && (
+          <WelcomeSplash userName={user?.name?.trim() || "Mr. Basavaraja"} onDismiss={onSplashDismiss} />
+        )}
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen xl:flex">
-      {/* Sidebar and Backdrop */}
       <AppSidebar />
       <Backdrop />
-
-      {/* Main Content Area */}
-      <div
-        className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
-      >
-        {/* Header */}
+      <div className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}>
         <AppHeader />
-
-        {/* Page Content */}
         <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
           {children}
         </div>

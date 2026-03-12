@@ -292,12 +292,13 @@ export default function SystemEarningLogs() {
 
       {/* Transfer Modal */}
       {transferOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setTransferOpen(false)}
+            aria-hidden="true"
           />
-          <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-6 animate-fadeIn">
+          <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-6">
             <h2 className="text-xl font-bold text-gray-800 dark:text-white">
               🔄 Transfer Funds to Pool
             </h2>
@@ -360,12 +361,13 @@ export default function SystemEarningLogs() {
 
       {/* Recharge Modal */}
       {rechargeOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => rechargeCloseHandle() }
+            aria-hidden="true"
           />
-          <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-6 animate-fadeIn">
+          <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-6">
             <h2 className="text-xl font-bold text-gray-800 dark:text-white">
               ⚡ Recharge System Wallet
             </h2>
@@ -571,10 +573,11 @@ export default function SystemEarningLogs() {
 
       {/* Weekly Confirmation Modal */}
       {confirmWeeklyOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setConfirmWeeklyOpen(false)}
+            aria-hidden="true"
           />
           <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6 w-full max-w-md">
             <h2 className="text-lg font-semibold mb-4">Confirm Weekly Reward</h2>
@@ -602,10 +605,11 @@ export default function SystemEarningLogs() {
 
       {/* Monthly Confirmation Modal */}
       {confirmMonthlyOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setConfirmMonthlyOpen(false)}
+            aria-hidden="true"
           />
           <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6 w-full max-w-md">
             {/* <h2 className="text-xl text-red-600 font-bold mb-4">This feature is coming soon.</h2> */}

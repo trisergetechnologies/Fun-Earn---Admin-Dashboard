@@ -73,16 +73,17 @@ export default function WithdrawalRequestModal({
     } as const;
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             {/* Overlay */}
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={onClose}
+                aria-hidden="true"
             />
             {/* Modal Box */}
-            <div className="relative w-full max-w-4xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden animate-fadeIn max-h-[95vh] flex flex-col">
+            <div className="relative w-full max-w-4xl max-h-[95vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col">
                 {/* Header */}
-                <div className="flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-indigo-600 to-purple-600">
+                <div className="shrink-0 flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-indigo-600 to-purple-600">
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
                         <Wallet className="w-5 h-5" /> Withdrawal Request
                     </h2>
@@ -95,7 +96,7 @@ export default function WithdrawalRequestModal({
                 </div>
 
                 {/* Body */}
-                <div className="p-6 space-y-8 overflow-y-auto text-sm">
+                <div className="flex-1 min-h-0 p-6 space-y-8 overflow-y-auto text-sm">
                     {/* 🧍 User Info */}
                     <section>
                         <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
@@ -217,7 +218,7 @@ export default function WithdrawalRequestModal({
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-between items-center p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                <div className="shrink-0 flex justify-between items-center p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                     <button
                         onClick={onClose}
                         className="px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-semibold"
@@ -246,9 +247,9 @@ export default function WithdrawalRequestModal({
 
             {/* ⚠️ Confirmation Modal */}
             {confirming && (
-                <div className="fixed inset-0 z-[10000] flex items-center justify-center">
-                    <div className="absolute inset-0 bg-black/50" onClick={() => setConfirming(null)} />
-                    <div className="relative bg-white dark:bg-gray-900 rounded-xl p-6 shadow-2xl w-full max-w-md">
+                <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50" onClick={() => setConfirming(null)} aria-hidden="true" />
+                    <div className="relative bg-white dark:bg-gray-900 rounded-xl p-6 shadow-2xl w-full max-w-md mx-auto">
                         <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
                             {confirming === "approve"
                                 ? "✅ Approve Withdrawal"

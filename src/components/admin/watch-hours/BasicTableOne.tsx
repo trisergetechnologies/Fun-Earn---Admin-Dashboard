@@ -321,10 +321,11 @@ export default function ShortVideoUsersTable() {
 
       {/* Reset Confirmation Modal */}
       {resetModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setResetModalOpen(false)}
+            aria-hidden="true"
           />
           <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl p-6 w-full max-w-md">
             <h2 className="text-lg font-semibold mb-4 text-red-600">
@@ -354,10 +355,11 @@ export default function ShortVideoUsersTable() {
 
       {/* Pay All Modal */}
       {payAllModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setPayAllModalOpen(false)}
+            aria-hidden="true"
           />
           <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl p-6 w-full max-w-md">
             <h2 className="text-lg font-semibold mb-4 text-green-600">

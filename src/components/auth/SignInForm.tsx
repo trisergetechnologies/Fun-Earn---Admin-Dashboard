@@ -36,7 +36,8 @@ export default function SignInForm() {
 
       if (res.data.success) {
         const token = res.data.data.token;
-        await login(token);
+        const userFromLogin = res.data.data.user ?? null;
+        await login(token, userFromLogin);
         toast.success("✅ Login successful! Redirecting...");
 
         setTimeout(() => {

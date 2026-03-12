@@ -5,6 +5,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { getToken, setToken, removeToken } from "@/helper/tokenHelper";
 import { setupAxiosInterceptors } from "@/helper/setupAxios";
+import { WELCOME_SPLASH_STORAGE_KEY } from "@/components/admin/WelcomeSplash";
 
 // ---------------- Types ----------------
 export interface ShortVideoProfile {
@@ -52,12 +53,25 @@ export interface User {
   wallets: Wallets;
 }
 
+// User shape returned from /auth/login
+export interface LoginResponseUser {
+  id?: string;
+  _id?: string;
+  name?: string;
+  email?: string;
+  gender?: string;
+  role?: string;
+  applications?: string[];
+  phone?: string;
+  referralCode?: string;
+}
+
 // ---------------- Context Types ----------------
 export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isAuthLoading: boolean;
-  login: (token: string) => Promise<void>;
+  login: (token: string, userFromLogin?: LoginResponseUser | null) => Promise<void>;
   logout: () => void;
 }
 
@@ -96,26 +110,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
   }, []);
 
-  // Login → Save token + fetch user
-  const login = async (token: string) => {
+  // Map login response user to full User shape (so name shows immediately)
+  const mapLoginUser = (u: LoginResponseUser | null | undefined): User | null => {
+    if (!u) return null;
+    return {
+      _id: (u._id ?? u.id ?? "") as string,
+      name: u.name ?? "",
+      email: u.email ?? "",
+      phone: u.phone,
+      gender: u.gender ?? "",
+      role: u.role ?? "admin",
+      applications: u.applications ?? [],
+      state_address: "",
+      referralCode: u.referralCode ?? "",
+      createdAt: "",
+      updatedAt: "",
+      shortVideoProfile: { watchTime: 0, videoUploads: [] },
+      eCartProfile: { addresses: [], orders: [], bankDetails: null },
+      wallets: { shortVideoWallet: 0, eCartWallet: 0, rewardWallet: [] },
+    };
+  };
+
+  // Login → Save token, set user from login response immediately, then optionally fetch full profile
+  const login = async (token: string, userFromLogin?: LoginResponseUser | null) => {
     setToken(token);
+    const initialUser = mapLoginUser(userFromLogin);
+    if (initialUser) setUser(initialUser);
     try {
       const res = await axios.get(
         `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/user/getme`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setUser(res.data.data);
+      if (res.data?.data) setUser(res.data.data);
     } catch (err) {
       console.error("Login fetch user failed:", err);
-      removeToken();
-      setUser(null);
+      if (!initialUser) {
+        removeToken();
+        setUser(null);
+      }
     }
   };
 
-  // Logout → remove token + redirect
+  // Logout → remove token, clear welcome splash flag (so next login shows splash once), redirect
   const logout = () => {
     removeToken();
     setUser(null);
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem(WELCOME_SPLASH_STORAGE_KEY);
+      } catch (_) {}
+    }
     router.push("/signin");
   };
 

@@ -7,12 +7,12 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
   if (!open || !order) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999999] flex items-center justify-center">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       {/* backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
 
       {/* modal */}
-      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-5xl mx-4 my-8 flex flex-col max-h-[90vh]">
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex justify-between items-center border-b px-6 py-4 shrink-0">
           <div>

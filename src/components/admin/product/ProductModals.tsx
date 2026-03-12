@@ -39,21 +39,24 @@ export function ProductDetail({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-3xl p-6 relative">
-        {/* Close */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
-        >
-          <X size={22} />
-        </button>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="shrink-0 flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{product.title}</h2>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+            aria-label="Close"
+          >
+            <X size={22} />
+          </button>
+        </div>
+        {/* Body - scrollable */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">
 
-        {/* Title */}
-        <h2 className="text-xl font-semibold mb-6">{product.title}</h2>
-
-        {/* Images */}
-        {product.images?.length > 0 && (
+          {/* Images */}
+          {product.images?.length > 0 && (
           <div className="flex gap-3 overflow-x-auto mb-6">
             {product?.images?.map((img, i) => (
               <img
@@ -101,20 +104,21 @@ export function ProductDetail({
           </div>
         )}
 
-        {/* Actions */}
-        <div className="mt-8 flex justify-end gap-3">
-          <button
-            onClick={() => onEdit(product)}
-            className="px-4 py-2 rounded-md bg-indigo-600 text-white text-sm hover:bg-indigo-700"
-          >
-            Edit
-          </button>
-          <button
-            onClick={handleDelete}
-            className="px-4 py-2 rounded-md bg-red-600 text-white text-sm hover:bg-red-700"
-          >
-            Delete
-          </button>
+          {/* Actions */}
+          <div className="mt-8 flex justify-end gap-3">
+            <button
+              onClick={() => onEdit(product)}
+              className="px-4 py-2 rounded-md bg-indigo-600 text-white text-sm hover:bg-indigo-700"
+            >
+              Edit
+            </button>
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 rounded-md bg-red-600 text-white text-sm hover:bg-red-700"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -437,18 +441,20 @@ export function ProductAdd({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <ProductForm
-        form={form}
-        setForm={setForm}
-        categories={categories}
-        sellers={sellers}
-        file={file}
-        setFile={setFile}
-        onSubmit={handleSubmit}
-        onCancel={onClose}
-        submitLabel="Add"
-      />
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-gray-900 shadow-2xl">
+        <ProductForm
+          form={form}
+          setForm={setForm}
+          categories={categories}
+          sellers={sellers}
+          file={file}
+          setFile={setFile}
+          onSubmit={handleSubmit}
+          onCancel={onClose}
+          submitLabel="Add"
+        />
+      </div>
     </div>
   );
 }
@@ -531,18 +537,20 @@ export function ProductUpdate({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <ProductForm
-        form={form}
-        setForm={setForm}
-        categories={categories}
-        sellers={sellers}
-        file={file}
-        setFile={setFile}
-        onSubmit={handleSubmit}
-        onCancel={onClose}
-        submitLabel="Update"
-      />
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-gray-900 shadow-2xl">
+        <ProductForm
+          form={form}
+          setForm={setForm}
+          categories={categories}
+          sellers={sellers}
+          file={file}
+          setFile={setFile}
+          onSubmit={handleSubmit}
+          onCancel={onClose}
+          submitLabel="Update"
+        />
+      </div>
     </div>
   );
 }
