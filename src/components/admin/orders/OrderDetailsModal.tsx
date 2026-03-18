@@ -32,33 +32,24 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
 
         {/* Scrollable Content */}
         <div className="overflow-y-auto px-6 py-4 space-y-6">
+          
           {/* Buyer + Payment */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <h3 className="font-medium text-gray-700 dark:text-gray-200">
                 Buyer Info
               </h3>
-              <p>
-                <strong>Name:</strong> {order.buyerId?.name}
-              </p>
-              <p>
-                <strong>Email:</strong> {order.buyerId?.email}
-              </p>
-              <p>
-                <strong>Phone:</strong> {order.deliveryAddress?.phone}
-              </p>
+              <p><strong>Name:</strong> {order.buyerId?.name}</p>
+              <p><strong>Email:</strong> {order.buyerId?.email}</p>
+              <p><strong>Phone:</strong> {order.deliveryAddress?.phone}</p>
             </div>
 
             <div className="space-y-2">
               <h3 className="font-medium text-gray-700 dark:text-gray-200">
                 Payment Info
               </h3>
-              <p>
-                <strong>Gateway:</strong> {order.paymentInfo?.gateway}
-              </p>
-              <p>
-                <strong>Payment ID:</strong> {order.paymentInfo?.paymentId}
-              </p>
+              <p><strong>Gateway:</strong> {order.paymentInfo?.gateway}</p>
+              <p><strong>Payment ID:</strong> {order.paymentInfo?.paymentId}</p>
               <p>
                 <strong>Payment Status:</strong>{" "}
                 <span
@@ -101,9 +92,7 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
                 {order.deliveryAddress?.street}, {order.deliveryAddress?.city},{" "}
                 {order.deliveryAddress?.state} - {order.deliveryAddress?.pincode}
               </p>
-              <p>
-                <strong>Phone:</strong> {order.deliveryAddress?.phone}
-              </p>
+              <p><strong>Phone:</strong> {order.deliveryAddress?.phone}</p>
             </div>
           </div>
 
@@ -112,6 +101,7 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
             <h3 className="font-medium text-gray-700 dark:text-gray-200 mb-2">
               Ordered Items
             </h3>
+
             <div className="space-y-3">
               {order.items?.map((item: any, i: number) => (
                 <div
@@ -125,23 +115,27 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
                     height={80}
                     className="rounded-md"
                   />
+
                   <div className="flex-1">
                     <p className="font-medium">{item.productTitle}</p>
-                    {item.selectedVariation && Array.isArray(item.selectedVariation) && item.selectedVariation.length > 0 && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-                        Variant: {item.selectedVariation
-                          .map((v: { name?: string; value?: string }) => (v.name && v.value ? `${v.name}: ${v.value}` : null))
-                          .filter(Boolean)
-                          .join(" · ") || "—"}
-                      </p>
-                    )}
                     <p className="text-sm text-gray-500">
                       Qty: {item.quantity} × ₹{item.finalPriceAtPurchase}
                     </p>
+
+                    {/* ✅ ADDED: Variant Display */}
+                    {item.selectedVariation?.length > 0 && (
+                      <p className="text-sm text-gray-500">
+                        {item.selectedVariation
+                          .map((v: any) => `${v.name}: ${v.value}`)
+                          .join(" | ")}
+                      </p>
+                    )}
+
                     <p className="text-sm text-gray-400">
                       Return policy: {item.returnPolicyDays} days
                     </p>
                   </div>
+
                   <p className="font-medium text-gray-800 dark:text-gray-200">
                     ₹{(item.quantity * item.finalPriceAtPurchase).toFixed(2)}
                   </p>
@@ -156,53 +150,33 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
               Payment Summary
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-              <p>
-                <strong>Total:</strong> ₹{order.totalAmount}
-              </p>
-              <p>
-                <strong>GST:</strong> ₹{order.totalGstAmount}
-              </p>
-              <p>
-                <strong>Wallet Used:</strong> ₹{order.usedWalletAmount}
-              </p>
-              <p>
-                <strong>Coupon:</strong>{" "}
-                {order.usedCouponCode || "Not applied"}
-              </p>
+              <p><strong>Total:</strong> ₹{order.totalAmount}</p>
+              <p><strong>GST:</strong> ₹{order.totalGstAmount}</p>
+              <p><strong>Wallet Used:</strong> ₹{order.usedWalletAmount}</p>
+              <p><strong>Coupon:</strong> {order.usedCouponCode || "Not applied"}</p>
               <p className="col-span-2 sm:col-span-3 font-semibold text-lg">
                 Final Paid: ₹{order.finalAmountPaid.toFixed(2)}
               </p>
             </div>
           </div>
 
-          {/* Refund / Return / Cancel Info */}
+          {/* Refund / Return / Cancel */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-3 border rounded-lg bg-gray-50 dark:bg-gray-800">
-              <p>
-                <strong>Cancel Requested:</strong>{" "}
-                {order.cancelRequested ? "Yes" : "No"}
-              </p>
+              <p><strong>Cancel Requested:</strong> {order.cancelRequested ? "Yes" : "No"}</p>
               {order.cancelReason && (
-                <p>
-                  <strong>Reason:</strong> {order.cancelReason}
-                </p>
+                <p><strong>Reason:</strong> {order.cancelReason}</p>
               )}
             </div>
+
             <div className="p-3 border rounded-lg bg-gray-50 dark:bg-gray-800">
-              <p>
-                <strong>Refund Status:</strong>{" "}
-                <span className="capitalize">{order.refundStatus}</span>
-              </p>
+              <p><strong>Refund Status:</strong> <span className="capitalize">{order.refundStatus}</span></p>
             </div>
+
             <div className="p-3 border rounded-lg bg-gray-50 dark:bg-gray-800">
-              <p>
-                <strong>Return Status:</strong>{" "}
-                <span className="capitalize">{order.returnStatus}</span>
-              </p>
+              <p><strong>Return Status:</strong> <span className="capitalize">{order.returnStatus}</span></p>
               {order.returnRequested && (
-                <p>
-                  <strong>Reason:</strong> {order.returnReason || "—"}
-                </p>
+                <p><strong>Reason:</strong> {order.returnReason || "—"}</p>
               )}
             </div>
           </div>
@@ -212,19 +186,15 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
             <h3 className="font-medium text-gray-700 dark:text-gray-200 mb-2">
               Tracking Updates
             </h3>
+
             {order.trackingUpdates?.length > 0 ? (
               <div className="space-y-3">
-                {order.trackingUpdates?.map((t: any, i: number) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-3 p-2 border-b last:border-none"
-                  >
+                {order.trackingUpdates.map((t: any, i: number) => (
+                  <div key={i} className="flex items-start gap-3 p-2 border-b last:border-none">
                     <div className="w-2 h-2 mt-2 rounded-full bg-indigo-600" />
                     <div>
                       <p className="font-medium capitalize">{t.status}</p>
-                      {t.note && (
-                        <p className="text-xs text-gray-500">{t.note}</p>
-                      )}
+                      {t.note && <p className="text-xs text-gray-500">{t.note}</p>}
                       <p className="text-xs text-gray-400">
                         {new Date(t.updatedAt).toLocaleString()}
                       </p>
@@ -236,6 +206,7 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
               <p className="text-sm text-gray-500">No tracking updates yet.</p>
             )}
           </div>
+
         </div>
       </div>
     </div>
