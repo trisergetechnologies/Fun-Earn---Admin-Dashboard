@@ -127,6 +127,14 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
                   />
                   <div className="flex-1">
                     <p className="font-medium">{item.productTitle}</p>
+                    {item.selectedVariation && Array.isArray(item.selectedVariation) && item.selectedVariation.length > 0 && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                        Variant: {item.selectedVariation
+                          .map((v: { name?: string; value?: string }) => (v.name && v.value ? `${v.name}: ${v.value}` : null))
+                          .filter(Boolean)
+                          .join(" · ") || "—"}
+                      </p>
+                    )}
                     <p className="text-sm text-gray-500">
                       Qty: {item.quantity} × ₹{item.finalPriceAtPurchase}
                     </p>
