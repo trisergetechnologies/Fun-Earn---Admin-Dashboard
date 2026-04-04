@@ -58,6 +58,8 @@ export default function BasicTableOne() {
   const [statusFilter, setStatusFilter] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+  const [createdFrom, setCreatedFrom] = useState("");
+  const [createdTo, setCreatedTo] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
@@ -73,6 +75,8 @@ export default function BasicTableOne() {
       if (searchId.trim()) params.search = searchId.trim();
       if (statusFilter) params.status = statusFilter;
       if (paymentFilter) params.paymentStatus = paymentFilter;
+      if (createdFrom.trim()) params.createdFrom = createdFrom.trim();
+      if (createdTo.trim()) params.createdTo = createdTo.trim();
       const res = await axios.get(baseUrl, {
         headers: { Authorization: `Bearer ${token}` },
         params
@@ -86,7 +90,7 @@ export default function BasicTableOne() {
     } finally {
       setLoading(false);
     }
-  }, [token, searchId, statusFilter, paymentFilter, sortBy]);
+  }, [token, searchId, statusFilter, paymentFilter, sortBy, createdFrom, createdTo]);
 
   useEffect(() => {
     fetchOrders(page);
@@ -142,6 +146,20 @@ export default function BasicTableOne() {
             <option value="paid">Paid</option>
             <option value="failed">Failed</option>
           </select>
+          <input
+            type="date"
+            value={createdFrom}
+            onChange={(e) => setCreatedFrom(e.target.value)}
+            title="Placed from (IST calendar date)"
+            className="border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700"
+          />
+          <input
+            type="date"
+            value={createdTo}
+            onChange={(e) => setCreatedTo(e.target.value)}
+            title="Placed through (IST calendar date, inclusive)"
+            className="border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700"
+          />
           <button
             onClick={handleFilterApply}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700"
