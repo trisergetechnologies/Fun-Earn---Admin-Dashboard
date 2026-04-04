@@ -7,6 +7,24 @@ import { Download } from "lucide-react";
 
 type ExportMode = "month" | "range";
 
+/** Reads filename from Content-Disposition (supports filename*=UTF-8''… and filename="…"). */
+function filenameFromContentDisposition(header: string | undefined): string | null {
+  if (!header || typeof header !== "string") return null;
+  const star = /filename\*\s*=\s*UTF-8''([^;\n]+)/i.exec(header);
+  if (star?.[1]) {
+    try {
+      return decodeURIComponent(star[1].trim());
+    } catch {
+      return star[1].trim();
+    }
+  }
+  const quoted = /filename\s*=\s*"([^"]+)"/i.exec(header);
+  if (quoted?.[1]) return quoted[1];
+  const plain = /filename\s*=\s*([^;\n]+)/i.exec(header);
+  if (plain?.[1]) return plain[1].trim().replace(/^"|"$/g, "");
+  return null;
+}
+
 function defaultMonthValue(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -69,11 +87,7 @@ export default function OrderReportExport() {
       });
 
       const dispo = res.headers["content-disposition"] as string | undefined;
-      let filename = "orders-report.xlsx";
-      if (dispo) {
-        const m = /filename="?([^";]+)"?/i.exec(dispo);
-        if (m?.[1]) filename = m[1];
-      }
+      const filename = filenameFromContentDisposition(dispo) ?? "order-report.xlsx";
 
       const blob = new Blob([res.data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
