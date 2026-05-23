@@ -20,7 +20,14 @@ import {
   UserCircleIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
-import { IndianRupeeIcon, PackageIcon, ShoppingBasketIcon, UserSearchIcon, WalletIcon } from "lucide-react";
+import {
+  Award,
+  IndianRupeeIcon,
+  PackageIcon,
+  ShoppingBasketIcon,
+  UserSearchIcon,
+  WalletIcon,
+} from "lucide-react";
 
 type NavItem = {
   name: string;
@@ -70,6 +77,11 @@ const navItems: NavItem[] = [
     name: "Handle Payouts",
     path: "/admin/payments",
   },
+  // {
+  //   icon: <Award className="h-5 w-5" />,
+  //   name: "Achievements",
+  //   path: "/admin/achievements",
+  // },
   {
     icon: <PackageIcon />,
     name: "Packages",

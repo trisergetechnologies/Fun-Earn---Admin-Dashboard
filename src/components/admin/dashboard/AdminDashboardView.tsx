@@ -12,6 +12,7 @@ import {
   Settings as SettingsIcon,
   Package,
   IndianRupeeIcon,
+  Award,
   Calendar,
   TrendingUp,
 } from "lucide-react";
@@ -34,6 +35,7 @@ const shortcuts = [
   { icon: <WalletIcon className="h-5 w-5" />, name: "System Wallet", path: "/admin/system-wallet" },
   { icon: <ShoppingBasketIcon className="h-5 w-5" />, name: "Orders", path: "/admin/orders" },
   { icon: <IndianRupeeIcon className="h-5 w-5" />, name: "Payouts", path: "/admin/payments" },
+  { icon: <Award className="h-5 w-5" />, name: "Achievements", path: "/admin/achievements" },
   { icon: <Package className="h-5 w-5" />, name: "Packages", path: "/admin/package" },
   { icon: <SettingsIcon className="h-5 w-5" />, name: "Settings", path: "/admin/settings" },
 ];
