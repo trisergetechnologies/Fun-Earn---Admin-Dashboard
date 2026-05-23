@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { Grid, PlayCircle, ShoppingBag } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -15,7 +15,7 @@ export default function Home() {
       {/* Content */}
       <div className="relative z-10 max-w-3xl text-center px-6">
         <h1 className="text-5xl md:text-6xl font-extrabold drop-shadow-lg">
-          Welcome to Admin Dashboard ✨
+          Welcome to Admin Dashboard
         </h1>
         <p className="mt-6 text-lg md:text-xl text-white/90">
           Manage <span className="font-semibold">Fun & Enjoy</span> and{" "}
