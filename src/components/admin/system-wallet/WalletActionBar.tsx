@@ -93,6 +93,8 @@ export default function WalletActionBar({
   };
 
   const handlePayWeekly = async () => {
+    if (loading) return;
+    setLoading(true);
     try {
       const res = await axios.post(
         `${base}/shortvideo/admin/payoutweeklyrewards`,
@@ -107,11 +109,14 @@ export default function WalletActionBar({
     } catch {
       toast.error("Weekly payout failed");
     } finally {
+      setLoading(false);
       setConfirmWeeklyOpen(false);
     }
   };
 
   const handlePayMonthly = async () => {
+    if (loading) return;
+    setLoading(true);
     try {
       const res = await axios.post(
         `${base}/shortvideo/admin/payoutmonthlyrewards`,
@@ -125,6 +130,7 @@ export default function WalletActionBar({
     } catch {
       toast.error("Monthly payout failed");
     } finally {
+      setLoading(false);
       setConfirmMonthlyOpen(false);
     }
   };
@@ -149,14 +155,16 @@ export default function WalletActionBar({
           <button
             type="button"
             onClick={() => setConfirmWeeklyOpen(true)}
-            className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-violet-700"
+            disabled={loading}
+            className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-violet-700 disabled:opacity-50"
           >
             Pay weekly reward
           </button>
           <button
             type="button"
             onClick={() => setConfirmMonthlyOpen(true)}
-            className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
+            disabled={loading}
+            className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
           >
             Pay monthly reward
           </button>
@@ -236,6 +244,7 @@ export default function WalletActionBar({
           onCancel={() => setConfirmWeeklyOpen(false)}
           onConfirm={handlePayWeekly}
           confirmClass="bg-purple-600 hover:bg-purple-700"
+          loading={loading}
         />
       )}
 
@@ -246,6 +255,7 @@ export default function WalletActionBar({
           onCancel={() => setConfirmMonthlyOpen(false)}
           onConfirm={handlePayMonthly}
           confirmClass="bg-emerald-600 hover:bg-emerald-700"
+          loading={loading}
         />
       )}
     </>
@@ -306,25 +316,41 @@ function ConfirmModal({
   onCancel,
   onConfirm,
   confirmClass,
+  loading = false,
 }: {
   title: string;
   body: string;
   onCancel: () => void;
   onConfirm: () => void;
   confirmClass: string;
+  loading?: boolean;
 }) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onCancel} aria-hidden />
+      <div
+        className="absolute inset-0 bg-black/50"
+        onClick={loading ? undefined : onCancel}
+        aria-hidden
+      />
       <div className="relative bg-white dark:bg-gray-900 rounded-xl p-6 max-w-md w-full">
         <h2 className="text-lg font-semibold dark:text-white">{title}</h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 mb-6">{body}</p>
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onCancel} className="px-4 py-2 rounded-md border">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+            className="px-4 py-2 rounded-md border disabled:opacity-50"
+          >
             Cancel
           </button>
-          <button type="button" onClick={onConfirm} className={`px-4 py-2 rounded-md text-white ${confirmClass}`}>
-            Confirm
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading}
+            className={`px-4 py-2 rounded-md text-white disabled:opacity-50 ${confirmClass}`}
+          >
+            {loading ? "…" : "Confirm"}
           </button>
         </div>
       </div>
