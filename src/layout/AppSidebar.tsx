@@ -53,6 +53,16 @@ const navItems: NavItem[] = [
     path: "/admin/product",
   },
   {
+    icon: <BoxCubeIcon />,
+    name: "Categories",
+    path: "/admin/categories",
+  },
+  {
+    icon: <UserCircleIcon />,
+    name: "Sellers",
+    path: "/admin/sellers",
+  },
+  {
     icon: <UserCircleIcon />,
     name: "Users",
     path: "/admin/users",

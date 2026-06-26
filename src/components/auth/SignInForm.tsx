@@ -41,7 +41,10 @@ export default function SignInForm() {
         toast.success("✅ Login successful! Redirecting...");
 
         setTimeout(() => {
-          router.push("/admin");
+          const role = userFromLogin?.role;
+          if (role === "seller") router.push("/seller/product");
+          else if (role === "admin") router.push("/admin");
+          else toast.error("Unauthorized role for this dashboard");
         }, 2000);
       } else {
         toast.error(res.data.message || "❌ Login failed");

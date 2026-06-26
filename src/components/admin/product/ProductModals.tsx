@@ -2,13 +2,25 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { X } from "lucide-react";
 import { Category, Product, Seller } from "./BasicTableOne";
 import { getToken } from "@/helper/tokenHelper";
+import ModalShell from "@/components/common/ModalShell";
+import Badge from "@/components/ui/badge/Badge";
 
-const API_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/product`;
-const CATEGORY_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/category/getcategory`;
-const SELLER_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/seller/getsellers`;
+const ADMIN_PRODUCT_API = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/product`;
+const SELLER_PRODUCT_API = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/seller/product`;
+const ADMIN_CATEGORY_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/category/getcategory`;
+const SELLER_CATEGORY_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/seller/category/getcategory`;
+const SELLER_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/seller/getsellers?dropdown=true`;
+const MAX_IMAGES = 5;
+
+function productApiBase(mode: "admin" | "seller") {
+  return mode === "seller" ? SELLER_PRODUCT_API : ADMIN_PRODUCT_API;
+}
+
+function categoryUrl(mode: "admin" | "seller") {
+  return mode === "seller" ? SELLER_CATEGORY_URL : ADMIN_CATEGORY_URL;
+}
 
 // const TOKEN = process.env.NEXT_PUBLIC_ADMIN_TOKEN!;
 let TOKEN: any
@@ -17,12 +29,14 @@ let TOKEN: any
 export function ProductDetail({
   product,
   open,
+  mode = "admin",
   onClose,
   onDelete,
   onEdit,
 }: {
   product: Product;
   open: boolean;
+  mode?: "admin" | "seller";
   onClose: () => void;
   onDelete: (id: string) => void;
   onEdit: (p: Product) => void;
@@ -31,7 +45,7 @@ export function ProductDetail({
 
   const handleDelete = async () => {
     TOKEN = getToken();
-    await axios.delete(`${API_URL}/deleteproduct/${product._id}`, {
+    await axios.delete(`${productApiBase(mode)}/deleteproduct/${product._id}`, {
       headers: { Authorization: `Bearer ${TOKEN}` },
     });
     onDelete(product._id);
@@ -39,89 +53,69 @@ export function ProductDetail({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="shrink-0 flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{product.title}</h2>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-            aria-label="Close"
-          >
-            <X size={22} />
-          </button>
+    <ModalShell onClose={onClose} title={product.title} maxWidth="max-w-3xl">
+      {product.images?.length > 0 && (
+        <div className="mb-6 flex gap-3 overflow-x-auto pb-1">
+          {product.images.map((img, i) => (
+            <img
+              key={i}
+              src={img}
+              alt={product.title}
+              className="h-32 w-32 shrink-0 rounded-lg border border-gray-200 object-cover dark:border-gray-700"
+            />
+          ))}
         </div>
-        {/* Body - scrollable */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-6">
+      )}
 
-          {/* Images */}
-          {product.images?.length > 0 && (
-          <div className="flex gap-3 overflow-x-auto mb-6">
-            {product?.images?.map((img, i) => (
-              <img
-                key={i}
-                src={img}
-                alt={product.title}
-                className="w-32 h-32 rounded-lg object-cover border border-gray-200 dark:border-gray-700"
-              />
+      <div className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm text-gray-700 dark:text-gray-300 sm:grid-cols-2">
+        <p><span className="font-medium">Category:</span> {product.categoryId?.title}</p>
+        <p><span className="font-medium">Seller:</span> {product.sellerId?.name || (mode === "seller" ? "You" : "Admin")}</p>
+        <p><span className="font-medium">Price:</span> ₹{product.price}</p>
+        <p><span className="font-medium">Discount:</span> {product.discountPercent}%</p>
+        <p><span className="font-medium">Final Price:</span> ₹{product.finalPrice}</p>
+        <p><span className="font-medium">Stock:</span> {product.stock}</p>
+        <p><span className="font-medium">GST:</span> {product.gst * 100}%</p>
+        <p className="flex items-center gap-2">
+          <span className="font-medium">Status:</span>
+          <Badge size="sm" color={product.isActive ? "success" : "error"}>
+            {product.isActive ? "Active" : "Inactive"}
+          </Badge>
+        </p>
+        <p><span className="font-medium">Created By:</span> {product.createdByRole}</p>
+        <p><span className="font-medium">Created:</span> {new Date(product.createdAt).toLocaleString()}</p>
+        <p className="sm:col-span-2"><span className="font-medium">Updated:</span> {new Date(product.updatedAt).toLocaleString()}</p>
+      </div>
+
+      {(product as any).variations?.length > 0 && (
+        <div className="mt-4">
+          <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Variations:</p>
+          <div className="flex flex-wrap gap-2">
+            {(product as any).variations.map((v: any, i: number) => (
+              <span key={i} className="rounded-md bg-gray-100 px-3 py-1 text-xs dark:bg-gray-800">
+                <span className="font-medium">{v.name}:</span> {(v.options || []).join(", ")}
+              </span>
             ))}
           </div>
-        )}
-
-        {/* Info Grid */}
-        <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-gray-700 dark:text-gray-300">
-          <p><span className="font-medium">Category:</span> {product.categoryId?.title}</p>
-          <p><span className="font-medium">Seller:</span> {product.sellerId?.name || "Admin"}</p>
-          <p><span className="font-medium">Price:</span> ₹{product.price}</p>
-          <p><span className="font-medium">Discount:</span> {product.discountPercent}%</p>
-          <p><span className="font-medium">Final Price:</span> ₹{product.finalPrice}</p>
-          <p><span className="font-medium">Stock:</span> {product.stock}</p>
-          <p><span className="font-medium">GST:</span> {product.gst * 100}%</p>
-          <p><span className="font-medium">Status:</span>{" "}
-            <span className={`px-2 py-1 text-xs rounded ${
-              product.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-            }`}>
-              {product.isActive ? "Active" : "Inactive"}
-            </span>
-          </p>
-          <p><span className="font-medium">Created By:</span> {product.createdByRole}</p>
-          <p><span className="font-medium">Created:</span> {new Date(product.createdAt).toLocaleString()}</p>
-          <p><span className="font-medium">Updated:</span> {new Date(product.updatedAt).toLocaleString()}</p>
         </div>
+      )}
 
-        {/* Variations */}
-        {(product as any).variations?.length > 0 && (
-          <div className="mt-4">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Variations:</p>
-            <div className="flex flex-wrap gap-2">
-              {(product as any).variations.map((v: any, i: number) => (
-                <span key={i} className="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-md text-xs">
-                  <span className="font-medium">{v.name}:</span> {(v.options || []).join(', ')}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-          {/* Actions */}
-          <div className="mt-8 flex justify-end gap-3">
-            <button
-              onClick={() => onEdit(product)}
-              className="px-4 py-2 rounded-md bg-indigo-600 text-white text-sm hover:bg-indigo-700"
-            >
-              Edit
-            </button>
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 rounded-md bg-red-600 text-white text-sm hover:bg-red-700"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
+      <div className="mt-8 flex flex-wrap justify-end gap-3 border-t border-gray-200 pt-6 dark:border-gray-700">
+        <button
+          type="button"
+          onClick={() => onEdit(product)}
+          className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+        >
+          Delete
+        </button>
       </div>
-    </div>
+    </ModalShell>
   );
 }
 
@@ -131,8 +125,11 @@ function ProductForm({
   setForm,
   categories,
   sellers,
-  file,
-  setFile,
+  mode = "admin",
+  newFiles,
+  setNewFiles,
+  existingImages,
+  setExistingImages,
   onSubmit,
   onCancel,
   submitLabel,
@@ -141,31 +138,17 @@ function ProductForm({
   setForm: (f: any) => void;
   categories: Category[];
   sellers: Seller[];
-  file?: File | null;
-  setFile?: (f: File | null) => void;
+  mode?: "admin" | "seller";
+  newFiles?: File[];
+  setNewFiles?: (f: File[]) => void;
+  existingImages?: string[];
+  setExistingImages?: (urls: string[]) => void;
   onSubmit: (e: any) => void;
   onCancel: () => void;
   submitLabel: string;
 }) {
   return (
-    <form
-      onSubmit={onSubmit}
-      className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl p-8 space-y-6 relative transition-all"
-    >
-      {/* Header */}
-      <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-4">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-          {submitLabel} Product
-        </h2>
-        <button
-          onClick={onCancel}
-          type="button"
-          className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-        >
-          <X size={22} />
-        </button>
-      </div>
-
+    <form onSubmit={onSubmit} className="space-y-6">
       {/* Title */}
       <div className="relative">
         <input
@@ -217,7 +200,7 @@ function ProductForm({
       </div>
 
       {/* Category / Seller */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className={`grid gap-4 ${mode === "admin" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
         <div className="relative">
           <select
             value={form.categoryId}
@@ -236,6 +219,7 @@ function ProductForm({
           </label>
         </div>
 
+        {mode === "admin" && (
         <div className="relative">
           <select
             value={form.sellerId}
@@ -253,9 +237,11 @@ function ProductForm({
             Seller
           </label>
         </div>
+        )}
       </div>
 
       {/* Active Toggle */}
+      {mode === "admin" && (
       <div className="flex items-center gap-3">
         <label className="text-sm font-medium">Status</label>
         <button
@@ -275,6 +261,7 @@ function ProductForm({
           {form.isActive ? "Active" : "Inactive"}
         </span>
       </div>
+      )}
 
       {/* Variations */}
       <div>
@@ -292,7 +279,7 @@ function ProductForm({
           </button>
         </div>
         {(form.variations || []).map((v: any, idx: number) => (
-          <div key={idx} className="flex gap-2 mb-2 items-center">
+          <div key={idx} className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center">
             <input
               placeholder="Name (e.g. Size)"
               value={v.name}
@@ -330,20 +317,47 @@ function ProductForm({
         )}
       </div>
 
-      {/* File Upload */}
-      {setFile && (
+      {/* Images */}
+      {setNewFiles && (
         <div>
-          <label className="text-sm font-medium mb-2 block">Product Image</label>
-          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-indigo-400 transition">
+          <label className="text-sm font-medium mb-2 block">
+            Product Images (max {MAX_IMAGES}, 1MB each)
+          </label>
+          {existingImages && existingImages.length > 0 && setExistingImages && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {existingImages.map((url, i) => (
+                <div key={url} className="relative">
+                  <img src={url} alt="" className="w-20 h-20 object-cover rounded border" />
+                  <button
+                    type="button"
+                    onClick={() => setExistingImages(existingImages.filter((_, idx) => idx !== i))}
+                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center">
             <input
               type="file"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="hidden"
-              id="file-upload"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={(e) => {
+                const picked = Array.from(e.target.files || []);
+                const total = (existingImages?.length || 0) + picked.length;
+                if (total > MAX_IMAGES) {
+                  alert(`Maximum ${MAX_IMAGES} images allowed`);
+                  return;
+                }
+                setNewFiles(picked);
+              }}
+              className="text-sm"
             />
-            <label htmlFor="file-upload" className="cursor-pointer text-sm text-gray-500">
-              {file ? file.name : "Click to upload or drag and drop"}
-            </label>
+            {newFiles && newFiles.length > 0 && (
+              <p className="text-xs text-gray-500 mt-2">{newFiles.length} new file(s) selected</p>
+            )}
           </div>
         </div>
       )}
@@ -371,10 +385,12 @@ function ProductForm({
 // ---------- Add ----------
 export function ProductAdd({
   open,
+  mode = "admin",
   onClose,
   onSave,
 }: {
   open: boolean;
+  mode?: "admin" | "seller";
   onClose: () => void;
   onSave: (p: Product) => void;
 }) {
@@ -390,31 +406,36 @@ export function ProductAdd({
     isActive: true,
     variations: [],
   });
-  const [file, setFile] = useState<File | null>(null);
+  const [newFiles, setNewFiles] = useState<File[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sellers, setSellers] = useState<Seller[]>([]);
 
-  // fetch categories & sellers
   useEffect(() => {
     const fetchData = async () => {
+      TOKEN = getToken();
       try {
-        const [catRes, sellerRes] = await Promise.all([
-          axios.get(CATEGORY_URL, { headers: { Authorization: `Bearer ${TOKEN}` } }),
-          axios.get(SELLER_URL, { headers: { Authorization: `Bearer ${TOKEN}` } }),
-        ]);
+        const catRes = await axios.get(categoryUrl(mode), {
+          headers: { Authorization: `Bearer ${TOKEN}` },
+        });
         setCategories(catRes.data.data || []);
-        setSellers(sellerRes.data.data || []);
+        if (mode === "admin") {
+          const sellerRes = await axios.get(SELLER_URL, {
+            headers: { Authorization: `Bearer ${TOKEN}` },
+          });
+          setSellers(sellerRes.data.data || []);
+        }
       } catch (err) {
         console.error("Error fetching categories/sellers", err);
       }
     };
     if (open) fetchData();
-  }, [open]);
+  }, [open, mode]);
 
   if (!open) return null;
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    TOKEN = getToken();
     const fd = new FormData();
     Object.entries(form).forEach(([k, v]) => {
       if (k === 'gst') {
@@ -431,42 +452,51 @@ export function ProductAdd({
         fd.append(k, String(v));
       }
     });
-    if (file) fd.append("image", file);
+    if (newFiles.length === 1) {
+      fd.append("image", newFiles[0]);
+    } else {
+      newFiles.forEach((f) => fd.append("images", f));
+    }
 
-    const res = await axios.post<Product>(`${API_URL}/addproduct`, fd, {
+    const res = await axios.post(`${productApiBase(mode)}/addproduct`, fd, {
       headers: { Authorization: `Bearer ${TOKEN}` },
     });
-    onSave(res.data);
+    if (!res.data?.success) {
+      alert(res.data?.message || "Failed to add product");
+      return;
+    }
+    onSave(res.data.data);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-gray-900 shadow-2xl">
-        <ProductForm
-          form={form}
-          setForm={setForm}
-          categories={categories}
-          sellers={sellers}
-          file={file}
-          setFile={setFile}
-          onSubmit={handleSubmit}
-          onCancel={onClose}
-          submitLabel="Add"
-        />
-      </div>
-    </div>
+    <ModalShell onClose={onClose} title="Add Product" maxWidth="max-w-2xl">
+      <ProductForm
+        form={form}
+        setForm={setForm}
+        categories={categories}
+        sellers={sellers}
+        mode={mode}
+        newFiles={newFiles}
+        setNewFiles={setNewFiles}
+        onSubmit={handleSubmit}
+        onCancel={onClose}
+        submitLabel="Add"
+      />
+    </ModalShell>
   );
 }
 
 // ---------- Update ----------
 export function ProductUpdate({
   open,
+  mode = "admin",
   product,
   onClose,
   onSave,
 }: {
   open: boolean;
+  mode?: "admin" | "seller";
   product: Product;
   onClose: () => void;
   onSave: (p: Product) => void;
@@ -486,31 +516,40 @@ export function ProductUpdate({
       options: (v.options || []).join(", ")
     })),
   });
-  const [file, setFile] = useState<File | null>(null);
+  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>(product.images || []);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sellers, setSellers] = useState<Seller[]>([]);
 
-  // fetch categories & sellers
   useEffect(() => {
     const fetchData = async () => {
+      TOKEN = getToken();
       try {
-        const [catRes, sellerRes] = await Promise.all([
-          axios.get(CATEGORY_URL, { headers: { Authorization: `Bearer ${TOKEN}` } }),
-          axios.get(SELLER_URL, { headers: { Authorization: `Bearer ${TOKEN}` } }),
-        ]);
+        const catRes = await axios.get(categoryUrl(mode), {
+          headers: { Authorization: `Bearer ${TOKEN}` },
+        });
         setCategories(catRes.data.data || []);
-        setSellers(sellerRes.data.data || []);
+        if (mode === "admin") {
+          const sellerRes = await axios.get(SELLER_URL, {
+            headers: { Authorization: `Bearer ${TOKEN}` },
+          });
+          setSellers(sellerRes.data.data || []);
+        }
       } catch (err) {
         console.error("Error fetching categories/sellers", err);
       }
     };
-    if (open) fetchData();
-  }, [open]);
+    if (open) {
+      setExistingImages(product.images || []);
+      fetchData();
+    }
+  }, [open, mode, product._id, product.images]);
 
   if (!open) return null;
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    TOKEN = getToken();
     const fd = new FormData();
     Object.entries(form).forEach(([k, v]) => {
       if (k === 'gst') {
@@ -527,30 +566,40 @@ export function ProductUpdate({
         fd.append(k, String(v));
       }
     });
-    if (file) fd.append("image", file);
+    fd.append("existingImages", JSON.stringify(existingImages));
+    if (newFiles.length === 1) {
+      fd.append("image", newFiles[0]);
+    } else {
+      newFiles.forEach((f) => fd.append("images", f));
+    }
 
-    const res = await axios.put(`${API_URL}/updateproduct/${product._id}`, fd, {
+    const res = await axios.put(`${productApiBase(mode)}/updateproduct/${product._id}`, fd, {
       headers: { Authorization: `Bearer ${TOKEN}` },
     });
-    onSave(res.data);
+    if (!res.data?.success) {
+      alert(res.data?.message || "Failed to update product");
+      return;
+    }
+    onSave(res.data.data);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-gray-900 shadow-2xl">
-        <ProductForm
-          form={form}
-          setForm={setForm}
-          categories={categories}
-          sellers={sellers}
-          file={file}
-          setFile={setFile}
-          onSubmit={handleSubmit}
-          onCancel={onClose}
-          submitLabel="Update"
-        />
-      </div>
-    </div>
+    <ModalShell onClose={onClose} title="Update Product" maxWidth="max-w-2xl">
+      <ProductForm
+        form={form}
+        setForm={setForm}
+        categories={categories}
+        sellers={sellers}
+        mode={mode}
+        newFiles={newFiles}
+        setNewFiles={setNewFiles}
+        existingImages={existingImages}
+        setExistingImages={setExistingImages}
+        onSubmit={handleSubmit}
+        onCancel={onClose}
+        submitLabel="Update"
+      />
+    </ModalShell>
   );
 }

@@ -12,11 +12,25 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "amp-api.mpdreams.in", // ✅ allow your product images
+        hostname: "amp-api.mpdreams.in",
       },
       {
         protocol: "https",
         hostname: "avatar.iran.liara.run",
+      },
+      {
+        protocol: "https",
+        hostname: "placehold.co",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "5000",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+        port: "5000",
       },
     ],
   },

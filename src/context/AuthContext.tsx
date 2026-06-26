@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { getToken, setToken, removeToken } from "@/helper/tokenHelper";
+import { getToken, setToken, removeToken, setUserRole, getMeUrl } from "@/helper/tokenHelper";
 import { setupAxiosInterceptors } from "@/helper/setupAxios";
 import { WELCOME_SPLASH_STORAGE_KEY } from "@/components/admin/WelcomeSplash";
 
@@ -93,11 +93,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
+        const roleHint = typeof window !== "undefined"
+          ? document.cookie.match(/(^| )auth_role=([^;]+)/)?.[2]
+          : null;
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/user/getme`,
+          getMeUrl(roleHint ? decodeURIComponent(roleHint) : null),
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setUser(res.data.data);
+        if (res.data.data?.role) setUserRole(res.data.data.role);
       } catch (err) {
         console.error("Auth check failed:", err);
         removeToken();
@@ -134,14 +138,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Login → Save token, set user from login response immediately, then optionally fetch full profile
   const login = async (token: string, userFromLogin?: LoginResponseUser | null) => {
     setToken(token);
+    if (userFromLogin?.role) setUserRole(userFromLogin.role);
     const initialUser = mapLoginUser(userFromLogin);
     if (initialUser) setUser(initialUser);
     try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/user/getme`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (res.data?.data) setUser(res.data.data);
+      const res = await axios.get(getMeUrl(userFromLogin?.role), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data?.data) {
+        setUser(res.data.data);
+        if (res.data.data.role) setUserRole(res.data.data.role);
+      }
     } catch (err) {
       console.error("Login fetch user failed:", err);
       if (!initialUser) {

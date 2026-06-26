@@ -30,8 +30,13 @@ export default function AdminLayout({
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
       router.push("/signin");
+      return;
     }
-  }, [isAuthLoading, isAuthenticated, router]);
+    if (!isAuthLoading && isAuthenticated && user && user.role !== "admin") {
+      if (user.role === "seller") router.push("/seller/product");
+      else router.push("/signin");
+    }
+  }, [isAuthLoading, isAuthenticated, user, router]);
 
   // Sidebar margin logic
   const mainContentMargin = isMobileOpen
@@ -50,7 +55,7 @@ export default function AdminLayout({
   }
 
   // Don’t render layout until auth state is confirmed
-  if (!isAuthenticated) {
+  if (!isAuthenticated || (user && user.role !== "admin")) {
     return null;
   }
 
