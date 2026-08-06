@@ -166,10 +166,11 @@ function SellerFormModal({
           </div>
         )}
         <div>
-          <Label>GSTIN</Label>
+          <Label>GSTIN (optional, max 15 characters)</Label>
           <Input
             value={form.sellerDetails.gstin}
-            onChange={(e) => setDetail("gstin", e.target.value.toUpperCase())}
+            maxLength={15}
+            onChange={(e) => setDetail("gstin", e.target.value.slice(0, 15))}
           />
         </div>
         <div>
@@ -260,4 +261,4 @@ function SellerFormModal({
     </ModalShell>
   );
 }
-
+

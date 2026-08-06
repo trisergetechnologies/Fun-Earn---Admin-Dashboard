@@ -90,7 +90,7 @@ export default function AdSettings() {
     return (
       <ComponentCard
         title="Mobile App Ads"
-        desc="Reels app — daily interstitials and home banner"
+        desc="Reels app — Unity LevelPlay banner and interstitials"
       >
         <p className="text-sm text-gray-500">Loading settings...</p>
       </ComponentCard>
@@ -100,7 +100,7 @@ export default function AdSettings() {
   return (
     <ComponentCard
       title="Mobile App Ads"
-      desc="Reels app — daily interstitials and home banner"
+      desc="Reels app — Unity LevelPlay daily interstitials and home banner"
     >
       <div className="space-y-6">
         <div>
@@ -114,8 +114,9 @@ export default function AdSettings() {
             onChange={(e) => setDailyLimit(clampLimit(e.target.value))}
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Minimum {MIN_LIMIT}, maximum {MAX_LIMIT}. Fullscreen ads on reels and
-            tabs; resets at midnight IST. Banner is separate and not counted.
+            Minimum {MIN_LIMIT}, maximum {MAX_LIMIT}. Unity fullscreen ads on
+            reels and tabs; resets at midnight IST. Banner is separate and not
+            counted.
           </p>
         </div>
 

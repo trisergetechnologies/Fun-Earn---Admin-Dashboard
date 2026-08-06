@@ -1,10 +1,19 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { getToken, setToken, removeToken, setUserRole, getMeUrl } from "@/helper/tokenHelper";
-import { setupAxiosInterceptors } from "@/helper/setupAxios";
+import {
+  AuthTokensInput,
+  getMeUrl,
+  getRefreshToken,
+  getToken,
+  getUserRole,
+  removeToken,
+  saveAuthTokens,
+  setUserRole,
+} from "@/helper/tokenHelper";
+import { ensureFreshAccessToken, setupAxiosInterceptors } from "@/helper/setupAxios";
 import { WELCOME_SPLASH_STORAGE_KEY } from "@/components/admin/WelcomeSplash";
 
 // ---------------- Types ----------------
@@ -66,43 +75,85 @@ export interface LoginResponseUser {
   referralCode?: string;
 }
 
+export type LoginTokens =
+  | string
+  | (AuthTokensInput & {
+      /** @deprecated Prefer accessToken + refreshToken */
+      token?: string | null;
+    });
+
 // ---------------- Context Types ----------------
 export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isAuthLoading: boolean;
-  login: (token: string, userFromLogin?: LoginResponseUser | null) => Promise<void>;
+  login: (tokens: LoginTokens, userFromLogin?: LoginResponseUser | null) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+function resolveAccessToken(tokens: LoginTokens): string {
+  if (typeof tokens === "string") return tokens;
+  return (tokens.accessToken || tokens.token || "") as string;
+}
 
 // ---------------- Provider ----------------
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const router = useRouter();
+  const logoutRef = useRef(() => {});
 
-  // Load user if token exists
+  const logout = () => {
+    removeToken();
+    setUser(null);
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem(WELCOME_SPLASH_STORAGE_KEY);
+      } catch (_) {}
+    }
+    router.push("/signin");
+  };
+
+  logoutRef.current = logout;
+
+  // Interceptors first, then restore session (so 401 can silent-refresh)
   useEffect(() => {
+    setupAxiosInterceptors(() => logoutRef.current());
+
     const initAuth = async () => {
-      const token = getToken();
+      let token = getToken();
       if (!token) {
         setIsAuthLoading(false);
         return;
       }
 
+      const meUrl = getMeUrl(getUserRole());
+
       try {
-        const roleHint = typeof window !== "undefined"
-          ? document.cookie.match(/(^| )auth_role=([^;]+)/)?.[2]
-          : null;
-        const res = await axios.get(
-          getMeUrl(roleHint ? decodeURIComponent(roleHint) : null),
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const res = await axios.get(meUrl);
         setUser(res.data.data);
         if (res.data.data?.role) setUserRole(res.data.data.role);
       } catch (err) {
+        // Interceptor may already have refreshed+retried. If still failing and we have
+        // a refresh token, try once more explicitly (covers race before interceptors).
+        if (getRefreshToken()) {
+          const fresh = await ensureFreshAccessToken();
+          if (fresh) {
+            try {
+              const res = await axios.get(meUrl, {
+                headers: { Authorization: `Bearer ${fresh}` },
+              });
+              setUser(res.data.data);
+              if (res.data.data?.role) setUserRole(res.data.data.role);
+              setIsAuthLoading(false);
+              return;
+            } catch {
+              // fall through to clear
+            }
+          }
+        }
         console.error("Auth check failed:", err);
         removeToken();
         setUser(null);
@@ -114,7 +165,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
   }, []);
 
-  // Map login response user to full User shape (so name shows immediately)
   const mapLoginUser = (u: LoginResponseUser | null | undefined): User | null => {
     if (!u) return null;
     return {
@@ -135,15 +185,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   };
 
-  // Login → Save token, set user from login response immediately, then optionally fetch full profile
-  const login = async (token: string, userFromLogin?: LoginResponseUser | null) => {
-    setToken(token);
+  const login = async (tokens: LoginTokens, userFromLogin?: LoginResponseUser | null) => {
+    if (typeof tokens === "string") {
+      saveAuthTokens({ accessToken: tokens });
+    } else {
+      saveAuthTokens(tokens);
+    }
+
+    const access = resolveAccessToken(tokens);
     if (userFromLogin?.role) setUserRole(userFromLogin.role);
     const initialUser = mapLoginUser(userFromLogin);
     if (initialUser) setUser(initialUser);
+
+    if (!access) return;
+
     try {
       const res = await axios.get(getMeUrl(userFromLogin?.role), {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${access}` },
       });
       if (res.data?.data) {
         setUser(res.data.data);
@@ -157,22 +215,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
   };
-
-  // Logout → remove token, clear welcome splash flag (so next login shows splash once), redirect
-  const logout = () => {
-    removeToken();
-    setUser(null);
-    if (typeof window !== "undefined") {
-      try {
-        sessionStorage.removeItem(WELCOME_SPLASH_STORAGE_KEY);
-      } catch (_) {}
-    }
-    router.push("/signin");
-  };
-
-  useEffect(() => {
-    setupAxiosInterceptors(logout);
-  }, []);
 
   return (
     <AuthContext.Provider
@@ -189,7 +231,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// ---------------- Hook ----------------
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuth must be used within an AuthProvider");

@@ -1,6 +1,7 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import DefaultInputs from "@/components/admin/settings/form-elements/DefaultInputs";
 import AdSettings from "@/components/admin/settings/form-elements/AdSettings";
+import DreamMartAdSettings from "@/components/admin/settings/form-elements/DreamMartAdSettings";
 import DeliverySettings from "@/components/admin/settings/form-elements/DeliverySettings";
 import { Metadata } from "next";
 
@@ -17,6 +18,7 @@ export default function FormElements() {
         <div className="space-y-6">
           <DeliverySettings />
           <AdSettings />
+          <DreamMartAdSettings />
         </div>
         <div className="space-y-6">
           <DefaultInputs />

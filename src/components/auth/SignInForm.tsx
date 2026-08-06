@@ -35,9 +35,16 @@ export default function SignInForm() {
       );
 
       if (res.data.success) {
-        const token = res.data.data.token;
-        const userFromLogin = res.data.data.user ?? null;
-        await login(token, userFromLogin);
+        const data = res.data.data;
+        const userFromLogin = data.user ?? null;
+        await login(
+          {
+            accessToken: data.accessToken || data.token,
+            refreshToken: data.refreshToken,
+            token: data.token,
+          },
+          userFromLogin
+        );
         toast.success("✅ Login successful! Redirecting...");
 
         setTimeout(() => {
