@@ -1,10 +1,47 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
+import axios from "axios";
+import { getToken } from "@/helper/tokenHelper";
+
+function isInvoiceEligible(order: any) {
+  return (
+    String(order?.paymentStatus || "").toLowerCase() === "paid" &&
+    String(order?.status || "").toLowerCase() !== "cancelled"
+  );
+}
 
 export default function OrderDetailsModal({ open, onClose, order }: any) {
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+
   if (!open || !order) return null;
+
+  const invoiceOk = isInvoiceEligible(order);
+
+  const handleViewInvoice = async () => {
+    if (!invoiceOk) return;
+    const token = getToken();
+    if (!token) return;
+
+    setInvoiceLoading(true);
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/order/order/invoice/${order._id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!res.data?.success || !res.data?.url) {
+        alert(res.data?.message || "Failed to load invoice");
+        return;
+      }
+      window.open(res.data.url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      console.error("Invoice error:", err);
+      alert("Failed to load invoice");
+    } finally {
+      setInvoiceLoading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
@@ -14,7 +51,7 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
       {/* modal */}
       <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex justify-between items-center border-b px-6 py-4 shrink-0">
+        <div className="flex justify-between items-center border-b px-6 py-4 shrink-0 gap-3">
           <div>
             <h2 className="text-xl font-semibold">Order #{order._id}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -22,12 +59,31 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
               Last updated {new Date(order.updatedAt).toLocaleString()}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-          >
-            Close
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleViewInvoice}
+              disabled={!invoiceOk || invoiceLoading}
+              title={
+                invoiceOk
+                  ? "View invoice (opens in new tab — use browser download there)"
+                  : "Invoice available only for paid, non-cancelled orders"
+              }
+              className={`px-4 py-2 rounded-md ${
+                invoiceOk
+                  ? "bg-slate-700 text-white hover:bg-slate-800"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
+              }`}
+            >
+              {invoiceLoading ? "Loading…" : "View invoice"}
+            </button>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
         {/* Scrollable Content */}
@@ -122,7 +178,6 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
                       Qty: {item.quantity} × ₹{item.finalPriceAtPurchase}
                     </p>
 
-                    {/* ✅ ADDED: Variant Display */}
                     {item.selectedVariation?.length > 0 && (
                       <p className="text-sm text-gray-500">
                         {item.selectedVariation

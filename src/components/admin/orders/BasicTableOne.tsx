@@ -43,9 +43,17 @@ interface Order {
   };
 }
 
+function isInvoiceEligible(order: Pick<Order, "paymentStatus" | "status">) {
+  return (
+    String(order.paymentStatus || "").toLowerCase() === "paid" &&
+    String(order.status || "").toLowerCase() !== "cancelled"
+  );
+}
+
 export default function BasicTableOne() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
+  const [invoiceLoadingId, setInvoiceLoadingId] = useState<string | null>(null);
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [openDetails, setOpenDetails] = useState(false);
@@ -90,7 +98,7 @@ export default function BasicTableOne() {
     } finally {
       setLoading(false);
     }
-  }, [token, searchId, statusFilter, paymentFilter, sortBy, createdFrom, createdTo]);
+  }, [token, searchId, statusFilter, paymentFilter, sortBy, createdFrom, createdTo, baseUrl]);
 
   useEffect(() => {
     fetchOrders(page);
@@ -104,6 +112,27 @@ export default function BasicTableOne() {
   const openChangeStatus = (order: Order) => {
     setStatusOrder(order);
     setOpenStatus(true);
+  };
+
+  const handleViewInvoice = async (order: Order) => {
+    if (!token || !isInvoiceEligible(order)) return;
+    setInvoiceLoadingId(order._id);
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/order/order/invoice/${order._id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!res.data?.success || !res.data?.url) {
+        alert(res.data?.message || "Failed to load invoice");
+        return;
+      }
+      window.open(res.data.url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      console.error("Invoice error:", err);
+      alert("Failed to load invoice");
+    } finally {
+      setInvoiceLoadingId(null);
+    }
   };
 
   const handleFilterApply = () => {
@@ -211,7 +240,10 @@ export default function BasicTableOne() {
                 </TableCell>
               </TableRow>
             ) : (
-              orders.map((order) => (
+              orders.map((order) => {
+                const invoiceOk = isInvoiceEligible(order);
+                const invoiceBusy = invoiceLoadingId === order._id;
+                return (
                 <TableRow
                   key={order._id}
                   className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition"
@@ -293,7 +325,7 @@ export default function BasicTableOne() {
 
                   {/* Actions */}
                   <TableCell>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => openOrderDetails(order)}
                         className="px-3 py-1 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-700"
@@ -306,10 +338,28 @@ export default function BasicTableOne() {
                       >
                         Change Status
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => handleViewInvoice(order)}
+                        disabled={!invoiceOk || invoiceBusy}
+                        title={
+                          invoiceOk
+                            ? "View invoice (opens in new tab)"
+                            : "Invoice available only for paid, non-cancelled orders"
+                        }
+                        className={`px-3 py-1 text-xs rounded-md ${
+                          invoiceOk
+                            ? "bg-slate-700 text-white hover:bg-slate-800"
+                            : "bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
+                        }`}
+                      >
+                        {invoiceBusy ? "Invoice…" : "Invoice"}
+                      </button>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
+                );
+              })
             )}
           </TableBody>
         </Table>
