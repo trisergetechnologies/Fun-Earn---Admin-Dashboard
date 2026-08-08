@@ -64,7 +64,7 @@ export default function BasicTableOne() {
   // Filters (backend-driven)
   const [searchId, setSearchId] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [paymentFilter, setPaymentFilter] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState("paid");
   const [sortBy, setSortBy] = useState("newest");
   const [createdFrom, setCreatedFrom] = useState("");
   const [createdTo, setCreatedTo] = useState("");
