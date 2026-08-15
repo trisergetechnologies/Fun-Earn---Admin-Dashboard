@@ -16,7 +16,7 @@ export default function BasicTables() {
     <div>
       <PageBreadcrumb pageTitle="Watch Hours" />
       <div className="space-y-6">
-        <ComponentCard title="Eligible Users (Completed 10 Hours)">
+        <ComponentCard title="Eligible Users (Completed 150 Minutes)">
           <BasicTableOne />
         </ComponentCard>
       </div>

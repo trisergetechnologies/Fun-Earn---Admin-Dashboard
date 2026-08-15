@@ -273,7 +273,7 @@ export default function ShortVideoUsersTable() {
                   {/* Watch Time */}
                   <TableCell>
                     <Badge size="sm" color="info">
-                      {(user.shortVideoProfile.watchTime / 3600).toFixed(2)} hrs
+                      {Math.floor((user.shortVideoProfile.watchTime || 0) / 60)}/150 min
                     </Badge>
                   </TableCell>
 

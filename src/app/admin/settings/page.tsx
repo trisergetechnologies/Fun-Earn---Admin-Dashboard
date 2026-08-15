@@ -3,6 +3,7 @@ import DefaultInputs from "@/components/admin/settings/form-elements/DefaultInpu
 import AdSettings from "@/components/admin/settings/form-elements/AdSettings";
 import DreamMartAdSettings from "@/components/admin/settings/form-elements/DreamMartAdSettings";
 import DeliverySettings from "@/components/admin/settings/form-elements/DeliverySettings";
+import PaymentGatewaySettings from "@/components/admin/settings/form-elements/PaymentGatewaySettings";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -17,6 +18,7 @@ export default function FormElements() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="space-y-6">
           <DeliverySettings />
+          <PaymentGatewaySettings />
           <AdSettings />
           <DreamMartAdSettings />
         </div>
