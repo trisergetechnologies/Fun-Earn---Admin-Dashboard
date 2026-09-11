@@ -1,4 +1,5 @@
 'use client'
+import { getBaseUrl } from '@/lib/apiBase';
 
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
@@ -105,7 +106,7 @@ export default function BasicTableOne() {
   const limit = 10;
 
   const token = getToken();
-  const baseUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/user/getusers`;
+  const baseUrl = `${getBaseUrl()}/ecart/admin/user/getusers`;
 
   const fetchUsers = useCallback(async (pageNum: number = 1) => {
     if (!token) return;
@@ -166,7 +167,7 @@ export default function BasicTableOne() {
     // ✅ fetch team for user
   const handleShowTeam = async (user: User) => {
     try {
-      const url = `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/getteam/?userId=${user._id}`;
+      const url = `${getBaseUrl()}/shortvideo/admin/getteam/?userId=${user._id}`;
       const res = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -180,7 +181,7 @@ export default function BasicTableOne() {
 
     const handleShowNetwork = async (user: User) => {
     try {
-      const url = `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/getnetwork/?userId=${user._id}`;
+      const url = `${getBaseUrl()}/shortvideo/admin/getnetwork/?userId=${user._id}`;
       
       const res = await axios.get(
         url,

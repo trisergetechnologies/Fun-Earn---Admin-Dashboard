@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 import React, { useState } from "react";
 import ComponentCard from "../../../common/ComponentCard";
 import Label from "../Label";
@@ -27,7 +28,7 @@ export default function DefaultInputs() {
       const token = getToken();
 
       const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/change-password`,
+        `${getBaseUrl()}/auth/change-password`,
         { oldPassword, newPassword },
         {
           headers: { Authorization: `Bearer ${token}` },

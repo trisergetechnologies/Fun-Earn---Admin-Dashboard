@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import { useState } from "react";
 import axios from "axios";
@@ -9,7 +10,7 @@ import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { toast } from "react-toastify";
 
-const API = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/seller`;
+const API = `${getBaseUrl()}/ecart/admin/seller`;
 
 const emptyDetails = {
   gstin: "",

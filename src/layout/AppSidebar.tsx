@@ -98,6 +98,15 @@ const navItems: NavItem[] = [
     path: "/admin/package",
   },
   {
+    icon: <PieChartIcon />,
+    name: "Auto Pool",
+    subItems: [
+      { name: "Overview", path: "/admin/autopool", new: true },
+      { name: "Pool Config", path: "/admin/autopool/pools" },
+      { name: "Participations", path: "/admin/autopool/participations" },
+    ],
+  },
+  {
     icon: <CalenderIcon />,
     name: "Settings",
     path: "/admin/settings",

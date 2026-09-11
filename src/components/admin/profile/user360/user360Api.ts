@@ -1,3 +1,4 @@
+import { getBaseUrl } from '@/lib/apiBase';
 import axios from "axios";
 import { getToken } from "@/helper/tokenHelper";
 import type {
@@ -8,7 +9,7 @@ import type {
 } from "./types";
 
 const BASE = () =>
-  `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin`;
+  `${getBaseUrl()}/shortvideo/admin`;
 
 function authHeaders() {
   const token = getToken();

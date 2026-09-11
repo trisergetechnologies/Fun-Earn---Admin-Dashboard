@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -59,7 +60,7 @@ export default function AdminDashboardView() {
     }
     setError(null);
     try {
-      const url = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/order/order/dashboard`;
+      const url = `${getBaseUrl()}/ecart/admin/order/order/dashboard`;
       const res = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });

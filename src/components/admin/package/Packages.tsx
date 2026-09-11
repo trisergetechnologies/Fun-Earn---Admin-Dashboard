@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -28,7 +29,7 @@ export default function Packages() {
       try {
         const token = getToken();
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/getpackageswithusercount`,
+          `${getBaseUrl()}/shortvideo/admin/getpackageswithusercount`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (res.data.success) {

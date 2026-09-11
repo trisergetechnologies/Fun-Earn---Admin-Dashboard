@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import { useState } from "react";
 import axios from "axios";
@@ -45,7 +46,7 @@ export default function WithdrawalRequestModal({
         setLoading(true);
         try {
             const res = await axios.post(
-                `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/wallet/handlewithdrawalrequest`,
+                `${getBaseUrl()}/ecart/admin/wallet/handlewithdrawalrequest`,
                 { requestId: request.requestId, action, remarks },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

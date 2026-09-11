@@ -1,3 +1,4 @@
+import { getBaseUrl } from '@/lib/apiBase';
 const ACCESS_COOKIE = "auth_token";
 const REFRESH_COOKIE = "auth_refresh";
 const ROLE_COOKIE = "auth_role";
@@ -69,12 +70,12 @@ export const removeToken = () => {
 };
 
 export function getMeUrl(role?: string | null): string {
-  const base = process.env.NEXT_PUBLIC_BASE_URL;
+  const base = getBaseUrl();
   const r = role || getUserRole();
   if (r === "seller") return `${base}/ecart/seller/user/getme`;
   return `${base}/ecart/admin/user/getme`;
 }
 
 export function getRefreshUrl(): string {
-  return `${process.env.NEXT_PUBLIC_BASE_URL}/auth/refresh`;
+  return `${getBaseUrl()}/auth/refresh`;
 }

@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
@@ -29,7 +30,7 @@ export default function WithdrawalRequestsAdmin() {
   const [dateTo, setDateTo] = useState("");
   const limit = 10;
   const token = getToken();
-  const baseUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/wallet/getwithdrawalrequests`;
+  const baseUrl = `${getBaseUrl()}/ecart/admin/wallet/getwithdrawalrequests`;
 
   const fetchRequests = useCallback(async (pageNum: number = 1) => {
     if (!token) return;

@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import React, { useState } from "react";
 import Image from "next/image";
@@ -27,7 +28,7 @@ export default function OrderDetailsModal({ open, onClose, order }: any) {
     setInvoiceLoading(true);
     try {
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/order/order/invoice/${order._id}`,
+        `${getBaseUrl()}/ecart/admin/order/order/invoice/${order._id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!res.data?.success || !res.data?.url) {

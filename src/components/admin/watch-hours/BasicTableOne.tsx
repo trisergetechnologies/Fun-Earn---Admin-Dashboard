@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
@@ -44,7 +45,7 @@ export default function ShortVideoUsersTable() {
   const [payAllModalOpen, setPayAllModalOpen] = useState(false);
 
   const token = getToken();
-  const baseUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/getuserswithwatchtime`;
+  const baseUrl = `${getBaseUrl()}/shortvideo/admin/getuserswithwatchtime`;
 
   const fetchUsers = useCallback(async (pageNum: number = 1) => {
     if (!token) return;
@@ -84,7 +85,7 @@ export default function ShortVideoUsersTable() {
     }
     try {
       const res = await axios.put(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/creditwatchtimeearnings`,
+        `${getBaseUrl()}/shortvideo/admin/creditwatchtimeearnings`,
         { amount, userId: id, bulk: false },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -111,7 +112,7 @@ export default function ShortVideoUsersTable() {
 
     try {
       const res = await axios.put(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/creditwatchtimeearnings`,
+        `${getBaseUrl()}/shortvideo/admin/creditwatchtimeearnings`,
         { amount: bulkAmount, bulk: true },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -133,7 +134,7 @@ export default function ShortVideoUsersTable() {
   const handleResetAllConfirmed = async () => {
     try {
       const res = await axios.put(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/resetallwatchtime`,
+        `${getBaseUrl()}/shortvideo/admin/resetallwatchtime`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

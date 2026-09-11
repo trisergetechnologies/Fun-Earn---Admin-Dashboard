@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import { useState } from "react";
 import axios from "axios";
@@ -19,7 +20,7 @@ export default function SellerChangePasswordForm() {
     try {
       const token = getToken();
       const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/change-password`,
+        `${getBaseUrl()}/auth/change-password`,
         { oldPassword, newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );

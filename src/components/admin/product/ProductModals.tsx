@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -7,11 +8,11 @@ import { getToken } from "@/helper/tokenHelper";
 import ModalShell from "@/components/common/ModalShell";
 import Badge from "@/components/ui/badge/Badge";
 
-const ADMIN_PRODUCT_API = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/product`;
-const SELLER_PRODUCT_API = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/seller/product`;
-const ADMIN_CATEGORY_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/category/getcategory`;
-const SELLER_CATEGORY_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/seller/category/getcategory`;
-const SELLER_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/seller/getsellers?dropdown=true`;
+const ADMIN_PRODUCT_API = `${getBaseUrl()}/ecart/admin/product`;
+const SELLER_PRODUCT_API = `${getBaseUrl()}/ecart/seller/product`;
+const ADMIN_CATEGORY_URL = `${getBaseUrl()}/ecart/admin/category/getcategory`;
+const SELLER_CATEGORY_URL = `${getBaseUrl()}/ecart/seller/category/getcategory`;
+const SELLER_URL = `${getBaseUrl()}/ecart/admin/seller/getsellers?dropdown=true`;
 const MAX_IMAGES = 5;
 
 function productApiBase(mode: "admin" | "seller") {

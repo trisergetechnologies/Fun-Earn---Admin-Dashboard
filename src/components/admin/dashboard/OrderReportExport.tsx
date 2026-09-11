@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import React, { useMemo, useState } from "react";
 import axios from "axios";
@@ -47,7 +48,7 @@ export default function OrderReportExport() {
   const [message, setMessage] = useState<string | null>(null);
 
   const baseUrl = useMemo(
-    () => `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/order/order/export.xlsx`,
+    () => `${getBaseUrl()}/ecart/admin/order/order/export.xlsx`,
     []
   );
 

@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import React, { useState } from "react";
 import Input from "@/components/form/input/InputField";
@@ -30,7 +31,7 @@ export default function SignInForm() {
     setLoading(true);
     try {
       const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`,
+        `${getBaseUrl()}/auth/login`,
         { email, password }
       );
 

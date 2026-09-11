@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
@@ -60,9 +61,9 @@ export interface Product {
   updatedAt: string;
 }
 
-const ADMIN_API_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/product/getproducts`;
-const SELLER_API_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/seller/product/getproducts`;
-const SELLERS_LIST_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/seller/getsellers?dropdown=true`;
+const ADMIN_API_URL = `${getBaseUrl()}/ecart/admin/product/getproducts`;
+const SELLER_API_URL = `${getBaseUrl()}/ecart/seller/product/getproducts`;
+const SELLERS_LIST_URL = `${getBaseUrl()}/ecart/admin/seller/getsellers?dropdown=true`;
 
 export default function ProductTable({ mode = "admin" }: { mode?: "admin" | "seller" }) {
   const [products, setProducts] = useState<Product[]>([]);

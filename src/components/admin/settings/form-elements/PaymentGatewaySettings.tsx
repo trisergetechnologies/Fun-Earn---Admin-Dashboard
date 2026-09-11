@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 import React, { useEffect, useState } from "react";
 import ComponentCard from "../../../common/ComponentCard";
 import Label from "../Label";
@@ -7,7 +8,7 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import { getToken } from "@/helper/tokenHelper";
 
-const API_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/settings`;
+const API_URL = `${getBaseUrl()}/ecart/admin/settings`;
 
 type PaymentGateway = "ccavenue" | "razorpay";
 

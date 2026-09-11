@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import { useState } from "react";
 import axios from "axios";
@@ -22,7 +23,7 @@ export default function WalletActionBar({
   setLoading,
 }: Props) {
   const token = getToken();
-  const base = process.env.NEXT_PUBLIC_BASE_URL;
+  const base = getBaseUrl();
 
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferAmount, setTransferAmount] = useState("");

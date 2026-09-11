@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
@@ -35,7 +36,7 @@ interface CategoryRow {
   productCount?: number;
 }
 
-const API = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/category`;
+const API = `${getBaseUrl()}/ecart/admin/category`;
 
 export default function CategoriesTable() {
   const [categories, setCategories] = useState<CategoryRow[]>([]);

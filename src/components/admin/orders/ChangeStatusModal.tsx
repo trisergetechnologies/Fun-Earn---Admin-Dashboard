@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -43,7 +44,7 @@ export default function ChangeStatusModal({ open, onClose, order, onUpdated }: a
     const token = getToken();
     try {
       const res = await axios.put(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/order/order/updatestatus/${order._id}`,
+        `${getBaseUrl()}/ecart/admin/order/order/updatestatus/${order._id}`,
         { status, note },
         { headers: { Authorization: `Bearer ${token}` } }
       );

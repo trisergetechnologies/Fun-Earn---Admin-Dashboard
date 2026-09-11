@@ -1,4 +1,5 @@
 "use client";
+import { getBaseUrl } from '@/lib/apiBase';
 
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
@@ -42,7 +43,7 @@ const CHIP_COLORS = [
 ];
 
 const BASE = () =>
-  `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin`;
+  `${getBaseUrl()}/shortvideo/admin`;
 
 export default function PayoutEligibleTable() {
   const [poolType, setPoolType] = useState<"weekly" | "monthly">("weekly");

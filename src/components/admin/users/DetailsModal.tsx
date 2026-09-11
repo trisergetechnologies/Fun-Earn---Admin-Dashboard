@@ -1,6 +1,7 @@
-// components/DetailsModal.tsx
 "use client";
 
+import { getBaseUrl } from '@/lib/apiBase';
+// components/DetailsModal.tsx
 import { X, Trash2, ShoppingBag, Video, Wallet, User } from "lucide-react";
 import Badge from "@/components/ui/badge/Badge";
 import { useState } from "react";
@@ -93,6 +94,8 @@ export default function DetailsModal({
 
   const [walletAmount, setWalletAmount] = useState("");
   const [walletLoading, setWalletLoading] = useState(false);
+  const [eCartAmount, setECartAmount] = useState("");
+  const [eCartLoading, setECartLoading] = useState(false);
   const [activating, setActivating] = useState(false);
 
   const [showEcartModal, setShowEcartModal] = useState(false);
@@ -109,7 +112,7 @@ export default function DetailsModal({
     try {
       setWalletLoading(true);
       const { data } = await axios.put(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/rechargeshortvideowallet`,
+        `${getBaseUrl()}/shortvideo/admin/rechargeshortvideowallet`,
         { userId: user._id, amount: amt },
         { headers: { Authorization: `Bearer ${getToken()}` } }
       );
@@ -141,7 +144,7 @@ export default function DetailsModal({
     try {
       setWalletLoading(true);
       const { data } = await axios.put(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/deductshortvideowallet`,
+        `${getBaseUrl()}/shortvideo/admin/deductshortvideowallet`,
         { userId: user._id, amount: amt },
         { headers: { Authorization: `Bearer ${getToken()}` } }
       );
@@ -152,10 +155,69 @@ export default function DetailsModal({
       } else {
         toast.warn(data.message || "Deduction failed");
       }
-    } catch (err) {
+    } catch (err: any) {
       toast.error(err.response?.data?.message || "Something went wrong");
     } finally {
       setWalletLoading(false);
+    }
+  };
+
+  const handleECartRecharge = async () => {
+    const amt = Number(eCartAmount);
+    if (!eCartAmount || amt <= 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
+    try {
+      setECartLoading(true);
+      const { data } = await axios.put(
+        `${getBaseUrl()}/shortvideo/admin/rechargeecartwallet`,
+        { userId: user._id, amount: amt },
+        { headers: { Authorization: `Bearer ${getToken()}` } }
+      );
+      if (data.success) {
+        toast.success(`Recharged ₹${amt} to Dream Mart wallet`);
+        setECartAmount("");
+        refreshUser();
+      } else {
+        toast.warn(data.message || "Recharge failed");
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Something went wrong");
+    } finally {
+      setECartLoading(false);
+    }
+  };
+
+  const handleECartDeduct = async () => {
+    const amt = Number(eCartAmount);
+    if (!eCartAmount || amt <= 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
+    const balance = user.wallets?.eCartWallet || 0;
+    if (amt > balance) {
+      toast.error(`Insufficient balance. Available: ₹${balance.toFixed(2)}`);
+      return;
+    }
+    try {
+      setECartLoading(true);
+      const { data } = await axios.put(
+        `${getBaseUrl()}/shortvideo/admin/deductecartwallet`,
+        { userId: user._id, amount: amt },
+        { headers: { Authorization: `Bearer ${getToken()}` } }
+      );
+      if (data.success) {
+        toast.success(`Deducted ₹${amt} from Dream Mart wallet`);
+        setECartAmount("");
+        refreshUser();
+      } else {
+        toast.warn(data.message || "Deduction failed");
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Something went wrong");
+    } finally {
+      setECartLoading(false);
     }
   };
 
@@ -165,7 +227,7 @@ export default function DetailsModal({
     try {
       setActivating(true);
       const token = getToken();
-      const url = `${process.env.NEXT_PUBLIC_BASE_URL}/shortvideo/admin/adminecartactivate`;
+      const url = `${getBaseUrl()}/shortvideo/admin/adminecartactivate`;
 
       const { data } = await axios.put(
         url,
@@ -204,7 +266,7 @@ export default function DetailsModal({
     try {
       setActivating(true);
       const token = getToken();
-      const url = `${process.env.NEXT_PUBLIC_BASE_URL}/ecart/admin/user/adminshortvideoactivate`;
+      const url = `${getBaseUrl()}/ecart/admin/user/adminshortvideoactivate`;
 
       const { data } = await axios.put(
         url,
@@ -432,10 +494,42 @@ export default function DetailsModal({
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-5 rounded-xl shadow-lg">
+                <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-5 rounded-xl shadow-lg relative">
                   <Wallet className="w-6 h-6 mb-2" />
-                  <p className="font-medium">E-Cart</p>
-                  <p className="text-2xl font-bold">₹{user.wallets.eCartWallet?.toFixed(2) || 0}</p>
+                  <p className="font-medium">Dream Mart</p>
+                  <p className="text-2xl font-bold">
+                    ₹{(user.wallets.eCartWallet ?? 0).toFixed(2)}
+                  </p>
+
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs text-white/80">Admin: Recharge or deduct</p>
+                    <div className="flex flex-wrap gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Amount"
+                        className="flex-1 min-w-0 px-3 py-2 text-sm rounded-lg bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        value={eCartAmount}
+                        onChange={(e) => setECartAmount(e.target.value)}
+                        disabled={eCartLoading}
+                      />
+                      <button
+                        onClick={handleECartRecharge}
+                        disabled={eCartLoading}
+                        className="px-3 py-2 text-sm font-semibold rounded-lg bg-emerald-400 text-gray-900 hover:bg-emerald-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {eCartLoading ? "…" : "Recharge"}
+                      </button>
+                      <button
+                        onClick={handleECartDeduct}
+                        disabled={eCartLoading}
+                        className="px-3 py-2 text-sm font-semibold rounded-lg bg-amber-400 text-gray-900 hover:bg-amber-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {eCartLoading ? "…" : "Deduct"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-5 rounded-xl shadow-lg">
