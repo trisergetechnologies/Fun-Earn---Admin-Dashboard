@@ -299,7 +299,7 @@ function SeatCard({
         </span>
         {seat.cycleCount != null && (
           <span className="rounded bg-violet-50 px-1.5 py-0.5 text-[10px] text-violet-800">
-            {seat.cycleCount}/{seat.maxCycles ?? 15}
+            {seat.cycleCount}/{seat.maxCycles ?? 10}
           </span>
         )}
       </div>
@@ -788,13 +788,13 @@ export default function AutopoolMatrix() {
                   <div className="rounded-lg border border-blue-200/60 bg-white/80 p-2.5 dark:border-blue-900/40 dark:bg-gray-900/60">
                     <div className="font-bold text-blue-700 dark:text-blue-300">2. Auto Re-Entry (50%)</div>
                     <p className="mt-1 text-[11px] text-gray-600 dark:text-gray-400">
-                      Re-places member as filler into oldest open FIFO slot (Cycles 1–14). On Cycle 15, goes to Feature.
+                      Re-places member as filler into oldest open FIFO slot (Cycles 1–9). On Cycle 10, goes to Feature.
                     </p>
                   </div>
                   <div className="rounded-lg border border-amber-200/60 bg-white/80 p-2.5 dark:border-amber-900/40 dark:bg-gray-900/60">
                     <div className="font-bold text-amber-700 dark:text-amber-300">3. Next Pool (20%)</div>
                     <p className="mt-1 text-[11px] text-gray-600 dark:text-gray-400">
-                      Reserves entry for Next Pool (Cycles 1–5). Milestone 5 unlocks upgrade! (Cycles 6–15 go to Feature).
+                      Reserves entry for Next Pool (Cycles 1–5). Milestone 5 unlocks upgrade! (Cycles 6–10 go to Feature).
                     </p>
                   </div>
                   <div className="rounded-lg border border-purple-200/60 bg-white/80 p-2.5 dark:border-purple-900/40 dark:bg-gray-900/60">
@@ -837,7 +837,7 @@ export default function AutopoolMatrix() {
                         (s) => String(s.participationId) === String(c.participationId)
                       );
                       const isMilestone5 = c.cycleNumber === 5;
-                      const isFinal15 = c.cycleNumber >= 15;
+                      const isFinal10 = c.cycleNumber >= 10;
 
                       const seatToOpen: Seat = seat || {
                         placementId: String(c.participationId),
@@ -868,19 +868,19 @@ export default function AutopoolMatrix() {
                           <td className="p-2.5">
                             <div className="flex items-center gap-1.5 font-semibold text-gray-900 dark:text-white">
                               <span>Cycle #{c.cycleNumber}</span>
-                              <span className="text-xs font-normal text-gray-400">/ 15</span>
+                              <span className="text-xs font-normal text-gray-400">/ 10</span>
                             </div>
                             <div className="mt-0.5 h-1 w-16 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                               <div
                                 className={`h-full ${
-                                  isFinal15
+                                  isFinal10
                                     ? "bg-purple-500"
                                     : isMilestone5
                                     ? "bg-amber-500"
                                     : "bg-emerald-500"
                                 }`}
                                 style={{
-                                  width: `${Math.min(100, Math.round((c.cycleNumber / 15) * 100))}%`,
+                                  width: `${Math.min(100, Math.round((c.cycleNumber / 10) * 100))}%`,
                                 }}
                               />
                             </div>
@@ -898,7 +898,7 @@ export default function AutopoolMatrix() {
                               {c.samePoolAmount}
                             </div>
                             <div className="text-[10px] text-gray-400">
-                              {isFinal15 ? "Redirected to Feature" : "Re-placed in Tree"}
+                              {isFinal10 ? "Redirected to Feature" : "Re-placed in Tree"}
                             </div>
                           </td>
                           <td className="p-2.5">
@@ -927,10 +927,10 @@ export default function AutopoolMatrix() {
                                 <Award className="h-3 w-3" />
                                 Pool {poolLevel + 1} Unlocked
                               </span>
-                            ) : isFinal15 ? (
+                            ) : isFinal10 ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 dark:bg-purple-950/60 dark:text-purple-300">
                                 <CheckCircle2 className="h-3 w-3" />
-                                15/15 Completed
+                                10/10 Completed
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
@@ -964,7 +964,7 @@ export default function AutopoolMatrix() {
                     (s) => String(s.participationId) === String(c.participationId)
                   );
                   const isMilestone5 = c.cycleNumber === 5;
-                  const isFinal15 = c.cycleNumber >= 15;
+                  const isFinal10 = c.cycleNumber >= 10;
 
                   const seatToOpen: Seat = seat || {
                     placementId: String(c.participationId),
@@ -990,7 +990,7 @@ export default function AutopoolMatrix() {
                               {label(c.user)}
                             </span>
                             <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">
-                              Cycle {c.cycleNumber} of 15
+                              Cycle {c.cycleNumber} of 10
                             </span>
                           </div>
                           <div className="mt-0.5 text-[11px] text-gray-500">
@@ -1004,7 +1004,7 @@ export default function AutopoolMatrix() {
                               <Award className="h-3 w-3" />
                               Pool {poolLevel + 1} Unlocked
                             </span>
-                          ) : isFinal15 ? (
+                          ) : isFinal10 ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] font-semibold text-purple-800 dark:bg-purple-950/60 dark:text-purple-300">
                               <CheckCircle2 className="h-3 w-3" />
                               Final Cycle
@@ -1050,7 +1050,7 @@ export default function AutopoolMatrix() {
                             {c.samePoolAmount}
                           </div>
                           <div className="text-[9px] text-blue-600/80 dark:text-blue-400/70">
-                            {isFinal15 ? "To Feature" : "Next Seat"}
+                            {isFinal10 ? "To Feature" : "Next Seat"}
                           </div>
                         </div>
 
@@ -1084,8 +1084,8 @@ export default function AutopoolMatrix() {
                         <span className="truncate pr-2">
                           {isMilestone5
                             ? `Earned eligibility to upgrade to Pool ${poolLevel + 1}!`
-                            : isFinal15
-                            ? "All 15 cycle rounds completed for this participation."
+                            : isFinal10
+                            ? "All 10 cycle rounds completed for this participation."
                             : `Re-entered FIFO queue to earn again in Cycle ${c.cycleNumber + 1}.`}
                         </span>
                         <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-brand-600 dark:text-brand-400">
@@ -1457,13 +1457,13 @@ export default function AutopoolMatrix() {
                       <span className="font-medium text-gray-700 dark:text-gray-300">
                         Cycle Progress:{" "}
                         <strong>
-                          {journey.participation?.cycleCount ?? 0} of {journey.participation?.maxCycles ?? 15}
+                          {journey.participation?.cycleCount ?? 0} of {journey.participation?.maxCycles ?? 10}
                         </strong>
                       </span>
                       <span className="font-semibold text-brand-600 dark:text-brand-400">
                         {Math.round(
                           ((journey.participation?.cycleCount ?? 0) /
-                            (journey.participation?.maxCycles || 15)) *
+                            (journey.participation?.maxCycles || 10)) *
                             100
                         )}
                         %
@@ -1477,7 +1477,7 @@ export default function AutopoolMatrix() {
                             100,
                             Math.round(
                               ((journey.participation?.cycleCount ?? 0) /
-                                (journey.participation?.maxCycles || 15)) *
+                                (journey.participation?.maxCycles || 10)) *
                                 100
                             )
                           )}%`,
