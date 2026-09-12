@@ -102,8 +102,8 @@ const navItems: NavItem[] = [
     name: "Auto Pool",
     subItems: [
       { name: "Overview", path: "/admin/autopool", new: true },
+      { name: "Matrix", path: "/admin/autopool/matrix", new: true },
       { name: "Pool Config", path: "/admin/autopool/pools" },
-      { name: "Participations", path: "/admin/autopool/participations" },
     ],
   },
   {

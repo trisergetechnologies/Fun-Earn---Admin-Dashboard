@@ -1,11 +1,5 @@
-import AutopoolParticipations from "@/components/admin/autopool/AutopoolParticipations";
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return (
-    <div>
-      <PageBreadcrumb pageTitle="Auto Pool Participations" />
-      <AutopoolParticipations />
-    </div>
-  );
+  redirect("/admin/autopool/matrix");
 }

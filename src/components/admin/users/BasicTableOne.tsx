@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Badge from "@/components/ui/badge/Badge";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import { User } from "lucide-react";
+import { User, Users, Sparkles } from "lucide-react";
 import DetailsModal from "./DetailsModal";
 import TeamTreeModal from "./TeamTreeModal";
 import NetworkModal from "./NetworkModal";
@@ -83,8 +83,12 @@ export interface User {
   wallets: Wallets;
 }
 
+interface BasicTableOneProps {
+  onStatsLoaded?: (stats: { totalUsers: number; totalActiveUsers: number }) => void;
+}
+
 // ------------------ Component ------------------
-export default function BasicTableOne() {
+export default function BasicTableOne({ onStatsLoaded }: BasicTableOneProps = {}) {
   const [users, setUsers] = useState<User[]>([]);
   const [open, setOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -95,6 +99,15 @@ export default function BasicTableOne() {
    // Network modal
   const [openNetwork, setOpenNetwork] = useState(false);
   const [networkData, setNetworkData] = useState<any>(null);
+
+  // Stats
+  const [stats, setStats] = useState<{
+    totalUsers: number | null;
+    totalActiveUsers: number | null;
+  }>({
+    totalUsers: null,
+    totalActiveUsers: null,
+  });
 
   // filters + sorting (backend-driven)
   const [search, setSearch] = useState("");
@@ -122,12 +135,30 @@ export default function BasicTableOne() {
       if (res.data.pagination) {
         setTotalPages(res.data.pagination.totalPages || 1);
       }
+
+      const totalUsers =
+        typeof res.data.totalUsers === "number"
+          ? res.data.totalUsers
+          : typeof res.data.stats?.totalUsers === "number"
+          ? res.data.stats.totalUsers
+          : null;
+      const totalActiveUsers =
+        typeof res.data.totalActiveUsers === "number"
+          ? res.data.totalActiveUsers
+          : typeof res.data.stats?.totalActiveUsers === "number"
+          ? res.data.stats.totalActiveUsers
+          : null;
+
+      if (totalUsers !== null && totalActiveUsers !== null) {
+        setStats({ totalUsers, totalActiveUsers });
+        onStatsLoaded?.({ totalUsers, totalActiveUsers });
+      }
     } catch (err) {
       console.error("Error fetching users", err);
     } finally {
       setLoading(false);
     }
-  }, [token, search, sortField, sortOrder]);
+  }, [token, search, sortField, sortOrder, onStatsLoaded]);
 
   useEffect(() => {
     fetchUsers(page);
@@ -197,6 +228,29 @@ export default function BasicTableOne() {
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03] p-4">
       
+      {/* Quick Summary Counts Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 p-3 bg-gray-50/70 dark:bg-white/[0.02] border border-gray-100 dark:border-white/[0.05] rounded-xl">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+          Showing <span className="font-semibold text-gray-800 dark:text-gray-200">{users.length}</span> users on this page
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1 font-medium text-gray-700 shadow-2xs dark:border-gray-800 dark:bg-white/[0.04] dark:text-gray-300">
+            <Users className="h-3.5 w-3.5 text-blue-500" />
+            Total Users:{" "}
+            <strong className="text-gray-900 dark:text-white">
+              {stats.totalUsers !== null ? stats.totalUsers.toLocaleString("en-IN") : "..."}
+            </strong>
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-1 font-medium text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300">
+            <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+            Total Active Users (Package / SN):{" "}
+            <strong className="text-emerald-700 dark:text-emerald-300">
+              {stats.totalActiveUsers !== null ? stats.totalActiveUsers.toLocaleString("en-IN") : "..."}
+            </strong>
+          </span>
+        </div>
+      </div>
+
       {/* Filters + Sorting (backend-driven) */}
       <div className="flex flex-col md:flex-row gap-4 mb-4">
         <input
@@ -325,7 +379,7 @@ export default function BasicTableOne() {
                     </div>
                   </TableCell>
 
-                  <TableCell className="px-5 py-4">₹{user.wallets.shortVideoWallet?.toFixed(2) || 0}</TableCell>
+                  <TableCell className="px-5 py-4">{user.wallets.shortVideoWallet?.toFixed(2) || 0}</TableCell>
 
                   {/* Status */}
                   <TableCell className="px-5 py-4">
