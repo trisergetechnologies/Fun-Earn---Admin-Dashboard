@@ -65,7 +65,7 @@ export default function AutopoolOverview() {
         <div>
           <div className="flex items-center gap-2.5">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-              Auto Pool Overview
+              Loyalty Pool Overview
             </h2>
             {data && (
               <span

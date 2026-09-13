@@ -4,7 +4,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 export default function AutopoolPage() {
   return (
     <div>
-      <PageBreadcrumb pageTitle="Auto Pool" />
+      <PageBreadcrumb pageTitle="Loyalty Pool" />
       <AutopoolOverview />
     </div>
   );

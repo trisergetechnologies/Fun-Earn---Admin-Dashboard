@@ -99,7 +99,7 @@ const navItems: NavItem[] = [
   },
   {
     icon: <PieChartIcon />,
-    name: "Auto Pool",
+    name: "Loyalty Pool",
     subItems: [
       { name: "Overview", path: "/admin/autopool", new: true },
       { name: "Matrix", path: "/admin/autopool/matrix", new: true },

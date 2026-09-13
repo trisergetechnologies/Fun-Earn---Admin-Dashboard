@@ -518,7 +518,7 @@ export default function AutopoolMatrix() {
       <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">Auto Pool Matrix</h2>
+            <h2 className="text-lg font-semibold">Loyalty Pool Matrix</h2>
             <p className="mt-1 max-w-2xl text-sm text-gray-600 dark:text-gray-400">
               Live FIFO tree, next fill, cycles, and per-person journey. Referral SN ≠ matrix parent.
             </p>
