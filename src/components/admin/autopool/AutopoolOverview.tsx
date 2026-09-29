@@ -201,7 +201,7 @@ export default function AutopoolOverview() {
         <div className="flex items-center justify-between border-b border-gray-100 pb-3 dark:border-gray-800">
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wider text-gray-800 dark:text-gray-200">
-              Pool Status & Distribution (Pools 1 – 10)
+              Pool Status & Distribution (Pools 1 – 13)
             </h3>
             <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
               Live member counts and cycle progression for each pool tier.
@@ -218,7 +218,7 @@ export default function AutopoolOverview() {
 
         {loading && !data && (
           <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-            {Array.from({ length: 10 }).map((_, i) => (
+            {Array.from({ length: 13 }).map((_, i) => (
               <div
                 key={i}
                 className="h-28 animate-pulse rounded-xl bg-gray-100 dark:bg-white/[0.03]"

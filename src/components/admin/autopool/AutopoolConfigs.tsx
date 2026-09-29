@@ -67,7 +67,7 @@ export default function AutopoolConfigs() {
             Pool Configurations & Economics
           </h1>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 sm:text-sm">
-            10-Tier multi-pool matrix structure, distribution splits, and cycle payout rules.
+            13-Tier multi-pool matrix structure, distribution splits, and cycle payout rules.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -97,9 +97,9 @@ export default function AutopoolConfigs() {
             <span className="text-[11px] font-semibold uppercase tracking-wider">Total Tiers</span>
           </div>
           <p className="mt-1.5 text-lg font-extrabold text-gray-900 dark:text-white">
-            10 Pools
+            13 Pools
           </p>
-          <p className="text-[11px] text-gray-400">Pool 1 through Pool 10</p>
+          <p className="text-[11px] text-gray-400">Pool 1 through Pool 13</p>
         </div>
 
         <div className="rounded-xl border border-gray-200/80 bg-white p-3.5 shadow-sm dark:border-gray-800 dark:bg-white/[0.03]">
@@ -119,7 +119,7 @@ export default function AutopoolConfigs() {
             <span className="text-[11px] font-semibold uppercase tracking-wider">Cycle Cap</span>
           </div>
           <p className="mt-1.5 text-lg font-extrabold text-gray-900 dark:text-white">
-            10 Cycles / Tier
+            5 Cycles / Tier
           </p>
           <p className="text-[11px] text-gray-400">Full graduation limit</p>
         </div>
@@ -145,7 +145,7 @@ export default function AutopoolConfigs() {
                 Tier Economics Breakdown
               </h2>
               <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                Calculated distribution amounts for each completed cycle across all 10 tiers.
+                Calculated distribution amounts for each completed cycle across all 13 tiers.
               </p>
             </div>
             <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
@@ -184,7 +184,7 @@ export default function AutopoolConfigs() {
                   <th className="px-3 py-3 text-right font-semibold">Auto Re-entry (50%)</th>
                   <th className="px-3 py-3 text-right font-semibold">Next Pool Reserve (20%)</th>
                   <th className="px-3 py-3 text-right font-semibold">System (10%)</th>
-                  <th className="px-3 py-3 text-right font-semibold">Max Profit (10×)</th>
+                  <th className="px-3 py-3 text-right font-semibold">Max Profit (5×)</th>
                   <th className="py-3 pl-3 pr-4 text-center font-semibold">Status</th>
                 </tr>
               </thead>
@@ -202,10 +202,10 @@ export default function AutopoolConfigs() {
 
                   const userProfit = Math.floor((collection * walletPct) / 100);
                   const reentry = Math.floor((collection * samePoolPct) / 100);
-                  const isPool10 = r.poolLevel === 10;
-                  const nextPoolAmount = isPool10 ? 0 : Math.floor((collection * nextPoolPct) / 100);
+                  const isLastPool = r.poolLevel === 13;
+                  const nextPoolAmount = isLastPool ? 0 : Math.floor((collection * nextPoolPct) / 100);
                   const systemAmount = Math.floor((collection * (adminPct + featurePct)) / 100);
-                  const maxProfit = userProfit * (r.maxCycles || 10);
+                  const maxProfit = userProfit * (r.maxCycles || 5);
 
                   return (
                     <tr
@@ -246,7 +246,7 @@ export default function AutopoolConfigs() {
 
                       {/* Next Pool Reserve (20%) */}
                       <td className="px-3 py-3.5 text-right font-medium">
-                        {isPool10 ? (
+                        {isLastPool ? (
                           <span className="text-[11px] text-gray-400 italic">Max Pool (to Feature)</span>
                         ) : (
                           <div className="flex flex-col items-end">
@@ -265,7 +265,7 @@ export default function AutopoolConfigs() {
                         {formatNum(systemAmount)}
                       </td>
 
-                      {/* Max Total Profit across 10 cycles */}
+                      {/* Max Total Profit across 5 cycles */}
                       <td className="px-3 py-3.5 text-right font-bold text-gray-900 dark:text-white">
                         {formatNum(maxProfit)}
                       </td>
