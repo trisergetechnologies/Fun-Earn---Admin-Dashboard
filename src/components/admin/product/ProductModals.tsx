@@ -23,6 +23,29 @@ function categoryUrl(mode: "admin" | "seller") {
   return mode === "seller" ? SELLER_CATEGORY_URL : ADMIN_CATEGORY_URL;
 }
 
+function validateCouponFields(form: any, mode: "admin" | "seller") {
+  if (mode !== "admin" || !form.couponEligible) return "";
+  if (form.couponWallet !== "eCartWallet" && form.couponWallet !== "shortVideoWallet") {
+    return "Choose where this coupon is credited";
+  }
+  const amountText = String(form.couponAmount ?? "").trim();
+  const amount = Number(amountText);
+  if (!/^\d+(\.\d{1,2})?$/.test(amountText) || !Number.isFinite(amount) || amount <= 0 || amount > 100000) {
+    return "Enter a valid coupon amount";
+  }
+  return "";
+}
+
+function payloadWithoutSellerCoupon(form: any, mode: "admin" | "seller") {
+  const payload = { ...form };
+  if (mode !== "admin") {
+    delete payload.couponEligible;
+    delete payload.couponWallet;
+    delete payload.couponAmount;
+  }
+  return payload;
+}
+
 // const TOKEN = process.env.NEXT_PUBLIC_ADMIN_TOKEN!;
 let TOKEN: any
 
@@ -241,6 +264,58 @@ function ProductForm({
         )}
       </div>
 
+      {mode === "admin" && (
+      <div className="space-y-3 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <label className="flex items-center gap-3 text-sm font-medium">
+          <input
+            type="checkbox"
+            checked={Boolean(form.couponEligible)}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                couponEligible: e.target.checked,
+                couponWallet: e.target.checked ? form.couponWallet || "" : "",
+                couponAmount: e.target.checked ? form.couponAmount ?? "" : "",
+              })
+            }
+            className="h-4 w-4 rounded border-gray-300 text-indigo-600"
+          />
+          Eligible for coupon
+        </label>
+        {form.couponEligible ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="relative">
+              <select
+                value={form.couponWallet || ""}
+                onChange={(e) => setForm({ ...form, couponWallet: e.target.value })}
+                className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-3 text-sm bg-transparent focus:border-indigo-500 outline-none"
+              >
+                <option value="">Select wallet</option>
+                <option value="eCartWallet">Dream Mart Wallet</option>
+                <option value="shortVideoWallet">Fun & Enjoy Wallet</option>
+              </select>
+              <label className="absolute left-3 -top-2.5 text-xs text-gray-500 bg-white dark:bg-gray-900 px-1">
+                Send to
+              </label>
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                inputMode="decimal"
+                value={form.couponAmount ?? ""}
+                onChange={(e) => setForm({ ...form, couponAmount: e.target.value })}
+                placeholder=" "
+                className="peer w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 pt-5 pb-2 text-sm bg-transparent focus:border-indigo-500 outline-none"
+              />
+              <label className="absolute left-3 top-1.5 text-xs text-gray-500">
+                Coupon amount
+              </label>
+            </div>
+          </div>
+        ) : null}
+      </div>
+      )}
+
       {/* Active Toggle */}
       {mode === "admin" && (
       <div className="flex items-center gap-3">
@@ -406,6 +481,9 @@ export function ProductAdd({
     sellerId: "",
     isActive: true,
     variations: [],
+    couponEligible: false,
+    couponWallet: "",
+    couponAmount: "",
   });
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -436,9 +514,14 @@ export function ProductAdd({
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    const couponError = validateCouponFields(form, mode);
+    if (couponError) {
+      alert(couponError);
+      return;
+    }
     TOKEN = getToken();
     const fd = new FormData();
-    Object.entries(form).forEach(([k, v]) => {
+    Object.entries(payloadWithoutSellerCoupon(form, mode)).forEach(([k, v]) => {
       if (k === 'gst') {
         fd.append(k, String(Number(v) / 100));
       } else if (k === 'variations') {
@@ -512,6 +595,9 @@ export function ProductUpdate({
     categoryId: product.categoryId?._id || "",
     sellerId: product.sellerId?._id || "",
     isActive: product.isActive,
+    couponEligible: Boolean((product as any).couponEligible),
+    couponWallet: (product as any).couponWallet || "",
+    couponAmount: (product as any).couponAmount ?? "",
     variations: ((product as any).variations || []).map((v: any) => ({
       name: v.name || "",
       options: (v.options || []).join(", ")
@@ -550,9 +636,14 @@ export function ProductUpdate({
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    const couponError = validateCouponFields(form, mode);
+    if (couponError) {
+      alert(couponError);
+      return;
+    }
     TOKEN = getToken();
     const fd = new FormData();
-    Object.entries(form).forEach(([k, v]) => {
+    Object.entries(payloadWithoutSellerCoupon(form, mode)).forEach(([k, v]) => {
       if (k === 'gst') {
         fd.append(k, String(Number(v) / 100));
       } else if (k === 'variations') {

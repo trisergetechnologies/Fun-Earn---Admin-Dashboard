@@ -16,6 +16,12 @@ const MIN_LIMIT = 5;
 const MAX_LIMIT = 20;
 const DEFAULT_LIMIT = 5;
 
+type AdProvider = "levelplay" | "startio";
+
+function normalizeProvider(value: unknown): AdProvider {
+  return value === "startio" ? "startio" : "levelplay";
+}
+
 function clampLimit(value: number): number {
   const n = Math.floor(Number(value));
   if (!Number.isFinite(n)) return DEFAULT_LIMIT;
@@ -25,6 +31,7 @@ function clampLimit(value: number): number {
 export default function AdSettings() {
   const [dailyLimit, setDailyLimit] = useState(DEFAULT_LIMIT);
   const [bannerEnabled, setBannerEnabled] = useState(true);
+  const [provider, setProvider] = useState<AdProvider>("levelplay");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -43,6 +50,7 @@ export default function AdSettings() {
           setBannerEnabled(
             s.adsBannerEnabled === undefined ? true : Boolean(s.adsBannerEnabled)
           );
+          setProvider(normalizeProvider(s.adsProvider));
         }
       } catch (err) {
         console.error("Failed to fetch ad settings", err);
@@ -67,6 +75,7 @@ export default function AdSettings() {
         {
           adsDailyInterstitialLimit: limit,
           adsBannerEnabled: bannerEnabled,
+          adsProvider: provider,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -104,6 +113,22 @@ export default function AdSettings() {
       desc="Reels app — Unity LevelPlay daily interstitials and home banner"
     >
       <div className="space-y-6">
+        <div>
+          <Label>Ad network</Label>
+          <select
+            value={provider}
+            onChange={(e) => setProvider(normalizeProvider(e.target.value))}
+            className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-3 text-sm bg-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+          >
+            <option value="levelplay">Unity LevelPlay</option>
+            <option value="startio">Start.io</option>
+          </select>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Default is Unity LevelPlay. Only one network runs. The app picks this
+            up on the next launch.
+          </p>
+        </div>
+
         <div>
           <Label>Daily interstitial limit (per user)</Label>
           <Input
