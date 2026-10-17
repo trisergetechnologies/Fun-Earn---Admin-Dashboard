@@ -32,6 +32,7 @@ interface Order {
   items: OrderItem[];
   status: string;
   finalAmountPaid: number;
+  usedWalletAmount?: number;
   paymentStatus: string;
   createdAt: string;
   deliveryAddress: {
@@ -220,7 +221,8 @@ export default function BasicTableOne() {
               <TableCell isHeader>Items</TableCell>
               <TableCell isHeader>Status</TableCell>
               <TableCell isHeader>Payment</TableCell>
-              <TableCell isHeader>Amount</TableCell>
+              <TableCell isHeader>Paid</TableCell>
+              <TableCell isHeader>Wallet</TableCell>
               <TableCell isHeader>Date</TableCell>
               <TableCell isHeader>Actions</TableCell>
             </TableRow>
@@ -230,13 +232,13 @@ export default function BasicTableOne() {
           <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-6">
+                <TableCell colSpan={8} className="text-center py-6">
                   Loading orders...
                 </TableCell>
               </TableRow>
             ) : orders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-6">
+                <TableCell colSpan={8} className="text-center py-6">
                   No orders found.
                 </TableCell>
               </TableRow>
@@ -314,9 +316,14 @@ export default function BasicTableOne() {
                     </Badge>
                   </TableCell>
 
-                  {/* Amount */}
+                  {/* Paid (gateway) */}
                   <TableCell className="font-medium text-gray-800 dark:text-white/90">
-                    ₹{order.finalAmountPaid.toFixed(2)}
+                    ₹{(Number(order.finalAmountPaid) || 0).toFixed(2)}
+                  </TableCell>
+
+                  {/* Wallet */}
+                  <TableCell className="font-medium text-gray-800 dark:text-white/90">
+                    ₹{(Number(order.usedWalletAmount) || 0).toFixed(2)}
                   </TableCell>
 
                   {/* Date */}
