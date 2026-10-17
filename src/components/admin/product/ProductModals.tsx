@@ -23,14 +23,31 @@ function categoryUrl(mode: "admin" | "seller") {
   return mode === "seller" ? SELLER_CATEGORY_URL : ADMIN_CATEGORY_URL;
 }
 
+function isValidCouponAmount(raw: unknown) {
+  const amountText = String(raw ?? "").trim();
+  const amount = Number(amountText);
+  return /^\d+(\.\d{1,2})?$/.test(amountText) && Number.isFinite(amount) && amount > 0 && amount <= 100000;
+}
+
 function validateCouponFields(form: any, mode: "admin" | "seller") {
   if (mode !== "admin" || !form.couponEligible) return "";
-  if (form.couponWallet !== "eCartWallet" && form.couponWallet !== "shortVideoWallet") {
+  if (
+    form.couponWallet !== "eCartWallet"
+    && form.couponWallet !== "shortVideoWallet"
+    && form.couponWallet !== "both"
+  ) {
     return "Choose where this coupon is credited";
   }
-  const amountText = String(form.couponAmount ?? "").trim();
-  const amount = Number(amountText);
-  if (!/^\d+(\.\d{1,2})?$/.test(amountText) || !Number.isFinite(amount) || amount <= 0 || amount > 100000) {
+  if (form.couponWallet === "both") {
+    if (!isValidCouponAmount(form.couponAmountEcart)) {
+      return "Enter a valid Dream Mart amount";
+    }
+    if (!isValidCouponAmount(form.couponAmountShortVideo)) {
+      return "Enter a valid Fun & Enjoy amount";
+    }
+    return "";
+  }
+  if (!isValidCouponAmount(form.couponAmount)) {
     return "Enter a valid coupon amount";
   }
   return "";
@@ -42,6 +59,8 @@ function payloadWithoutSellerCoupon(form: any, mode: "admin" | "seller") {
     delete payload.couponEligible;
     delete payload.couponWallet;
     delete payload.couponAmount;
+    delete payload.couponAmountEcart;
+    delete payload.couponAmountShortVideo;
   }
   return payload;
 }
@@ -276,6 +295,8 @@ function ProductForm({
                 couponEligible: e.target.checked,
                 couponWallet: e.target.checked ? form.couponWallet || "" : "",
                 couponAmount: e.target.checked ? form.couponAmount ?? "" : "",
+                couponAmountEcart: e.target.checked ? form.couponAmountEcart ?? "" : "",
+                couponAmountShortVideo: e.target.checked ? form.couponAmountShortVideo ?? "" : "",
               })
             }
             className="h-4 w-4 rounded border-gray-300 text-indigo-600"
@@ -283,7 +304,7 @@ function ProductForm({
           Eligible for coupon
         </label>
         {form.couponEligible ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div className="relative">
               <select
                 value={form.couponWallet || ""}
@@ -293,24 +314,56 @@ function ProductForm({
                 <option value="">Select wallet</option>
                 <option value="eCartWallet">Dream Mart Wallet</option>
                 <option value="shortVideoWallet">Fun & Enjoy Wallet</option>
+                <option value="both">Both wallets</option>
               </select>
               <label className="absolute left-3 -top-2.5 text-xs text-gray-500 bg-white dark:bg-gray-900 px-1">
                 Send to
               </label>
             </div>
-            <div className="relative">
-              <input
-                type="text"
-                inputMode="decimal"
-                value={form.couponAmount ?? ""}
-                onChange={(e) => setForm({ ...form, couponAmount: e.target.value })}
-                placeholder=" "
-                className="peer w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 pt-5 pb-2 text-sm bg-transparent focus:border-indigo-500 outline-none"
-              />
-              <label className="absolute left-3 top-1.5 text-xs text-gray-500">
-                Coupon amount
-              </label>
-            </div>
+            {form.couponWallet === "both" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={form.couponAmountEcart ?? ""}
+                    onChange={(e) => setForm({ ...form, couponAmountEcart: e.target.value })}
+                    placeholder=" "
+                    className="peer w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 pt-5 pb-2 text-sm bg-transparent focus:border-indigo-500 outline-none"
+                  />
+                  <label className="absolute left-3 top-1.5 text-xs text-gray-500">
+                    Dream Mart amount
+                  </label>
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={form.couponAmountShortVideo ?? ""}
+                    onChange={(e) => setForm({ ...form, couponAmountShortVideo: e.target.value })}
+                    placeholder=" "
+                    className="peer w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 pt-5 pb-2 text-sm bg-transparent focus:border-indigo-500 outline-none"
+                  />
+                  <label className="absolute left-3 top-1.5 text-xs text-gray-500">
+                    Fun & Enjoy amount
+                  </label>
+                </div>
+              </div>
+            ) : (
+              <div className="relative">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={form.couponAmount ?? ""}
+                  onChange={(e) => setForm({ ...form, couponAmount: e.target.value })}
+                  placeholder=" "
+                  className="peer w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 pt-5 pb-2 text-sm bg-transparent focus:border-indigo-500 outline-none"
+                />
+                <label className="absolute left-3 top-1.5 text-xs text-gray-500">
+                  Coupon amount
+                </label>
+              </div>
+            )}
           </div>
         ) : null}
       </div>
@@ -484,6 +537,8 @@ export function ProductAdd({
     couponEligible: false,
     couponWallet: "",
     couponAmount: "",
+    couponAmountEcart: "",
+    couponAmountShortVideo: "",
   });
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -598,6 +653,8 @@ export function ProductUpdate({
     couponEligible: Boolean((product as any).couponEligible),
     couponWallet: (product as any).couponWallet || "",
     couponAmount: (product as any).couponAmount ?? "",
+    couponAmountEcart: (product as any).couponAmountEcart ?? "",
+    couponAmountShortVideo: (product as any).couponAmountShortVideo ?? "",
     variations: ((product as any).variations || []).map((v: any) => ({
       name: v.name || "",
       options: (v.options || []).join(", ")
