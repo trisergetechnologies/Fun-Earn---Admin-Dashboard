@@ -55,6 +55,10 @@ function validateCouponFields(form: any, mode: "admin" | "seller") {
 
 function payloadWithoutSellerCoupon(form: any, mode: "admin" | "seller") {
   const payload = { ...form };
+  // Derived client-side preview fields — server recomputes these
+  delete payload.price;
+  delete payload.finalPrice;
+  delete payload.discountPercent;
   if (mode !== "admin") {
     delete payload.couponEligible;
     delete payload.couponWallet;
@@ -63,6 +67,27 @@ function payloadWithoutSellerCoupon(form: any, mode: "admin" | "seller") {
     delete payload.couponAmountShortVideo;
   }
   return payload;
+}
+
+function round2(n: number) {
+  return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+}
+
+function previewInclusivePricing(form: any) {
+  const basePrice = Number(form.basePrice) || 0;
+  const transportCharge = Number(form.transportCharge) || 0;
+  const discountAmount = Math.min(
+    Math.max(0, Number(form.discountAmount) || 0),
+    basePrice + transportCharge
+  );
+  const gstRate = (Number(form.gst) || 0) / 100;
+  const exGstList = round2(basePrice + transportCharge);
+  const exGstSell = round2(Math.max(0, exGstList - discountAmount));
+  const listPrice = round2(exGstList * (1 + gstRate));
+  const finalPrice = round2(exGstSell * (1 + gstRate));
+  const discountPercent =
+    exGstList > 0 ? round2((discountAmount / exGstList) * 100) : 0;
+  return { listPrice, finalPrice, discountPercent, exGstList, exGstSell };
 }
 
 // const TOKEN = process.env.NEXT_PUBLIC_ADMIN_TOKEN!;
@@ -113,9 +138,12 @@ export function ProductDetail({
       <div className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm text-gray-700 dark:text-gray-300 sm:grid-cols-2">
         <p><span className="font-medium">Category:</span> {product.categoryId?.title}</p>
         <p><span className="font-medium">Seller:</span> {product.sellerId?.name || (mode === "seller" ? "You" : "Admin")}</p>
-        <p><span className="font-medium">Price:</span> ₹{product.price}</p>
-        <p><span className="font-medium">Discount:</span> {product.discountPercent}%</p>
-        <p><span className="font-medium">Final Price:</span> ₹{product.finalPrice}</p>
+        <p><span className="font-medium">Price:</span> ₹{product.basePrice ?? product.price}</p>
+        <p><span className="font-medium">Transport:</span> ₹{product.transportCharge ?? 0}</p>
+        <p><span className="font-medium">Discount:</span> ₹{product.discountAmount ?? 0}</p>
+        <p><span className="font-medium">Discount %:</span> {product.discountPercent}%</p>
+        <p><span className="font-medium">List (incl. GST):</span> ₹{product.price}</p>
+        <p><span className="font-medium">Final Price (incl. GST):</span> ₹{product.finalPrice}</p>
         <p><span className="font-medium">Stock:</span> {product.stock}</p>
         <p><span className="font-medium">GST:</span> {product.gst * 100}%</p>
         <p className="flex items-center gap-2">
@@ -219,11 +247,12 @@ function ProductForm({
         </label>
       </div>
 
-      {/* Price / Discount / Stock / GST */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      {/* Price / Transport / Discount ₹ / Stock / GST */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[
-          { label: "Price", key: "price", type: "number" },
-          { label: "Discount %", key: "discountPercent", type: "number" },
+          { label: "Price", key: "basePrice", type: "number" },
+          { label: "Transport", key: "transportCharge", type: "number" },
+          { label: "Discount ₹", key: "discountAmount", type: "number" },
           { label: "Stock", key: "stock", type: "number" },
           { label: "GST %", key: "gst", type: "number" },
         ].map((f) => (
@@ -241,6 +270,18 @@ function ProductForm({
           </div>
         ))}
       </div>
+      {(() => {
+        const preview = previewInclusivePricing(form);
+        return (
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Customer sees list ₹{preview.listPrice} / sell ₹{preview.finalPrice}
+            {preview.discountPercent > 0
+              ? ` (${preview.discountPercent}% off, rounded on app)`
+              : ""}
+            . Transport is not shown in the customer app.
+          </p>
+        );
+      })()}
 
       {/* Category / Seller */}
       <div className={`grid gap-4 ${mode === "admin" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
@@ -526,8 +567,9 @@ export function ProductAdd({
   const [form, setForm] = useState<any>({
     title: "",
     description: "",
-    price: 0,
-    discountPercent: 0,
+    basePrice: 0,
+    transportCharge: 0,
+    discountAmount: 0,
     stock: 0,
     gst: 5,
     categoryId: "",
@@ -643,8 +685,18 @@ export function ProductUpdate({
   const [form, setForm] = useState<any>({
     title: product.title,
     description: product.description,
-    price: product.price,
-    discountPercent: product.discountPercent,
+    basePrice:
+      product.basePrice != null
+        ? product.basePrice
+        : product.price,
+    transportCharge: product.transportCharge ?? 0,
+    discountAmount:
+      product.discountAmount != null
+        ? product.discountAmount
+        : round2(
+            ((product.basePrice ?? product.price) * (product.discountPercent || 0)) /
+              100
+          ),
     stock: product.stock,
     gst: Math.round(product.gst * 100),
     categoryId: product.categoryId?._id || "",

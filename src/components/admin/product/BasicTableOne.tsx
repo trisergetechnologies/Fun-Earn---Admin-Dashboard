@@ -50,6 +50,9 @@ export interface Product {
   title: string;
   description: string;
   images: string[];
+  basePrice?: number;
+  transportCharge?: number;
+  discountAmount?: number;
   price: number;
   gst: number;
   discountPercent: number;
